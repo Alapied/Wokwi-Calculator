@@ -19,6 +19,19 @@
 #define P1C3 28;
 #define P1C4 29;
 
+const uint8_t ROWS = 4;
+const uint8_t COLS = 4;
+char keys[ROWS][COLS] = {
+  { '1', '2', '3', '+' },
+  { '4', '5', '6', '-' },
+  { '7', '8', '9', '*' },
+  { '=', '0', '.', '/' }
+};
+
+uint8_t colPins[COLS] = { P1C1, P1C2, P1C3, P1C4 }; // Pins connected to C1, C2, C3, C4
+uint8_t rowPins[ROWS] = { P1R1, P1R2, P1R3, P1R4 }; // Pins connected to R1, R2, R3, R4
+
+
 //Keypad 2
 #define P2R1 32;
 #define P2R2 33;
@@ -67,6 +80,7 @@ char[20] rawInput; //Keeps raw input as is for display
 char[20] inNum; //Keeps current number being entered
 string[20] inString; //Keeps numbers and operators seperate and in order
 
+
 //Global Bools
 bool displayupdated = false;
 
@@ -80,9 +94,10 @@ void setup() {
   
 
   // Password Protection
-  
+  //Serial.println("Enter Password before ")
   //Enter password  
 }
+
 
 void loop() {
   // put your main code here, to run repeatedly:
@@ -147,5 +162,39 @@ void updatedisplayonchange(){
   if (displayupdated == false){
     //Update all elements (redraw char array)
     displayupdated == true
+  }
+}
+
+
+//Input keypresses
+
+void keypads(){
+  char key1 = keypad.getKey();
+  //char key2 = keypad.getKey()
+  if (key1 != NO_KEY) {
+    Serial.println(key1);
+    if (isDigit(key1)){
+      //add char to input and display arrays
+    } else {
+      choosekey(key1);
+    }
+  }
+}
+
+
+void choosefunckey (char key){
+  //has to work this way given buttons have more than one use in some cases
+  switch (key)
+  {
+  case "=":
+    
+    break;
+  case "":
+    
+    break;
+  case "=":
+    
+    break;
+
   }
 }
