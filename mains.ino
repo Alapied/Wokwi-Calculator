@@ -6,18 +6,17 @@
 //Pin Def here
 
 //LDR
-#define ldr A0;
+#define ldr A0
 
 //Keypad 1
-#define P1R1 22;
-#define P1R2 23;
-#define P1R3 24;
-#define P1R4 25;
-
-#define P1C1 26;
-#define P1C2 27;
-#define P1C3 28;
-#define P1C4 29;
+#define P1R1 22
+#define P1R2 23
+#define P1R3 24
+#define P1R4 25
+#define P1C1 26
+#define P1C2 27
+#define P1C3 28
+#define P1C4 29
 
 bool error = false;
 
@@ -35,15 +34,15 @@ uint8_t rowPins1[ROWS] = { P1R1, P1R2, P1R3, P1R4 }; // Pins connected to R1, R2
 
 
 //Keypad 2
-#define P2R1 32;
-#define P2R2 33;
-#define P2R3 34;
-#define P2R4 35;
+#define P2R1 32
+#define P2R2 33
+#define P2R3 34
+#define P2R4 35
 
-#define P2C1 36;
-#define P2C2 37;
-#define P2C3 38;
-#define P2C4 39;
+#define P2C1 36
+#define P2C2 37
+#define P2C3 38
+#define P2C4 39
 
 char keys2[ROWS][COLS] = {
   { 'T', 'CE', '<', '(' },
@@ -89,11 +88,13 @@ byte MultiplySymb[] = {
 };
 //Arrays
 
-char[20] rawInput; //Keeps raw input as is for display
-char[20] inNum; //Keeps current number being entered
-string[20] inString; //Keeps numbers and operators seperate and in order
+char rawInput[20]; //Keeps raw input as is for display
+char inNum[20]; //Keeps current number being entered
+String inString[20]; //Keeps numbers and operators seperate and in order
 
 int masterptr = 0;
+int cursorx;
+int cursory;
 
 //Global Bools
 bool displayupdated = false;
@@ -105,7 +106,7 @@ Keypad keypad2 = Keypad(makeKeymap(keys2), rowPins2, colPins2, ROWS, COLS);
 
 void setup() {
   // Initalise Env
-  Serial.Begin(9600);
+  Serial.begin(9600);
   
 
   // Password Protection
@@ -116,24 +117,22 @@ void setup() {
 
 void loop() {
   // keypad
-
-
-  
-  
+  keypads();
   if (error){
     lcd.clear();
     lcd.setCursor(cursorx,cursory);
-    lcd.print(character);
-    return
+    lcd.print("Error");
+    return;
   }
   //display 
+
 }
 
-float calculate(string[20] inputArray) {
+float calculate(String inputArray[20]) {
   float firstNum;
-  float secNum;
+  float secondNum;
   char readin;
-  for(int i = 0; i < (inputArray.length()); i++) {
+  for(int i = 0; i < inputArray.length(); i++) {
     if (inputArray[i] == "*") {
       //multiply
       firstNum = floatMaker(inputArray[i - 1]);
@@ -141,10 +140,10 @@ float calculate(string[20] inputArray) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      inputArray = rerformArray(inputArray, i, firstNum * secondNum);
+      inputArray = reformArray(inputArray, i, firstNum * secondNum);
     }
   }
-  for(int i = 0; i < (inputArray.length()); i++) {
+  for(int i = 0; i < inputArray.length(); i++) {
     if (inputArray[i] == "+") {
       //add
       firstNum = floatMaker(inputArray[i - 1]);
@@ -152,10 +151,10 @@ float calculate(string[20] inputArray) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      inputArray = rerformArray(inputArray, i, firstNum + secondNum);
+      inputArray = reformArray(inputArray, i, firstNum + secondNum);
     }
   }
-  for(int i = 0; i < (inputArray.length()); i++) {
+  for(int i = 0; i < inputArray.length(); i++) {
     if (inputArray[i] == "-") {
       //subtract
       firstNum = floatMaker(inputArray[i - 1]);
@@ -163,7 +162,7 @@ float calculate(string[20] inputArray) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      inputArray = rerformArray(inputArray, i, firstNum - secondNum);
+      inputArray = reformArray(inputArray, i, firstNum - secondNum);
     }
   }
   if (inputArray[1] == "") {
@@ -174,7 +173,7 @@ float calculate(string[20] inputArray) {
   }
 }
 
-float floatMaker(string input) {
+float floatMaker(String input) {
   char readin;
   for(int j = 0; j < input.length(); j++) {
     readin = input.charAt(j);
@@ -193,7 +192,7 @@ float floatMaker(string input) {
 }
 
 
-String[20] reformArray(String inArray[20], int index, float newValue) {
+String reformArray[20](String inArray[20], int index, float newValue) {
   String newArray[20];
   
   for (int i = 0; i < index - 1; i++){ //Enters all of the arrays items upto the one before the first number used
