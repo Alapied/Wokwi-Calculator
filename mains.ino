@@ -140,9 +140,7 @@ float calculate(string[20] inputArray) {
       if(error = true) { //If error is detected error should be displayed instead.
         return 0;
       }
-
-      return firstNum * secondNum;
-      
+      inputArray = rerformArray(inputArray, i, firstNum * secondNum);
     }
   }
   for(int i = 0; i < (inputArray.length()); i++) {
@@ -153,8 +151,7 @@ float calculate(string[20] inputArray) {
       if(error = true) { //If error is detected error should be displayed instead.
         return 0;
       }
-
-      return firstNum + secondNum;
+      inputArray = rerformArray(inputArray, i, firstNum + secondNum);
     }
   }
   for(int i = 0; i < (inputArray.length()); i++) {
@@ -165,9 +162,14 @@ float calculate(string[20] inputArray) {
       if(error = true) { //If error is detected error should be displayed instead.
         return 0;
       }
-
-      return firstNum - secondNum;
+      inputArray = rerformArray(inputArray, i, firstNum - secondNum);
     }
+  }
+  if (inputArray[1] == "") {
+    return inputArray[0];
+  }
+  else {
+    Serial.println("Something is wrong.")
   }
 }
 
@@ -186,7 +188,7 @@ float floatMaker(string input) {
 }
 
 
-String[20] reformArray(String inArray[20]) {
+String[20] reformArray(String inArray[20], int index, float newValue) {
   String newArray[20];
 
   return newArray[];
