@@ -141,7 +141,7 @@ float calculate(string[20] inputArray) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      inputArray = rerformArray(inputArray, i, firstNum * secondNum);
+      inputArray = reformArray(inputArray, i, firstNum * secondNum);
     }
   }
   for(int i = 0; i < (inputArray.length()); i++) {
@@ -152,7 +152,7 @@ float calculate(string[20] inputArray) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      inputArray = rerformArray(inputArray, i, firstNum + secondNum);
+      inputArray = reformArray(inputArray, i, firstNum + secondNum);
     }
   }
   for(int i = 0; i < (inputArray.length()); i++) {
@@ -163,10 +163,10 @@ float calculate(string[20] inputArray) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      inputArray = rerformArray(inputArray, i, firstNum - secondNum);
+      inputArray = reformArray(inputArray, i, firstNum - secondNum);
     }
   }
-  if (inputArray[1] == "") {
+  if (inputArray[1] == "") { //Only one number is left.
     return inputArray[0];
   }
   else {
@@ -179,11 +179,11 @@ float floatMaker(string input) {
   for(int j = 0; j < input.length(); j++) {
     readin = input.charAt(j);
     if (isdigit(readin) == false) {
-      if (readin != '.') { //Not a digit or decial place
+      if (readin != '.' && readin != '-') { //Not a digit or decial place
         error = true;
         return 0;
       }
-      if (input.charAt(j - 1) == '.') {
+      else if (input.charAt(j - 1) == '.') {
         error = true;
         return 0;
       }
