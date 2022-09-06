@@ -135,60 +135,54 @@ float calculate(string[20] inputArray) {
   for(int i = 0; i < (inputArray.length()); i++) {
     if (inputArray[i] == "*") {
       //multiply
-      
-      for(int j = 0; j < inputArray[i - 1].length(); j++) { //Validates first number.
-        readin = inputArray[i - 1].charAt(j);
-        if (isDigit(readin) == false) {
-          error = true;
-          return 0;
-        }
-        else {
-          if (j == inputArray[i - 1].length() - 1) {
-            firstNum = inputArray[i - 1];
-          }
-        }
+      firstNum = floatMaker(inputArray[i - 1]);
+      secondNum = floatMaker(inputArray[i + 1]);
+      if(error = true) { //If error is detected error should be displayed instead.
+        return 0;
       }
 
-      for(int j = 0; j < inputArray[i + 1].length(); j++) { //Validates second number.
-        readin = inputArray[i +_ 1].charAt(j);
-        if (isDigit(readin) == false) {
-          error = true;
-          return 0;
-        }
-        else {
-          if (j == inputArray[i - 1].length() - 1) {
-            firstNum = inputArray[i - 1];
-          }
-        }
-      }
+      return firstNum * secondNum;
+      
     }
   }
   for(int i = 0; i < (inputArray.length()); i++) {
     if (inputArray[i] == "+") {
       //add
+      firstNum = floatMaker(inputArray[i - 1]);
+      secondNum = floatMaker(inputArray[i + 1]);
+      if(error = true) { //If error is detected error should be displayed instead.
+        return 0;
+      }
+
+      return firstNum + secondNum;
     }
   }
   for(int i = 0; i < (inputArray.length()); i++) {
     if (inputArray[i] == "-") {
       //subtract
+      firstNum = floatMaker(inputArray[i - 1]);
+      secondNum = floatMaker(inputArray[i + 1]);
+      if(error = true) { //If error is detected error should be displayed instead.
+        return 0;
+      }
+
+      return firstNum - secondNum;
     }
   }
 }
 
 float floatMaker(string input) {
   char readin;
-  for(int j = 0; j < input.length(); j++) { //Validates first number.
+  for(int j = 0; j < input.length(); j++) {
     readin = input.charAt(j);
-    // if (isDigit(readin) == false) {
-    //   error = true;
-    //   return 0;
-    // }
-    // else {
-    //   if (j == input.length() - 1) {
-    //     return input.toFloat();
-    //   }
-    // }
+    if (isdigit(readin) == false) {
+      if (readin != '.') { //Not a digit or decial place
+        error = true;
+        return 0;
+      }
+    }
   }
+  return input.tofloat(); //Turns input string into float and returns 
 }
 
 
