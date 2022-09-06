@@ -46,10 +46,10 @@ uint8_t rowPins1[ROWS] = { P1R1, P1R2, P1R3, P1R4 }; // Pins connected to R1, R2
 #define P2C4 39;
 
 char keys2[ROWS][COLS] = {
-  { '1', '2', '3', '+' },
-  { '4', '5', '6', '-' },
-  { '7', '8', '9', '*' },
-  { '=', '0', '.', '/' }
+  { 'T', 'CE', '<', '(' },
+  { 'R', 'MC', 'MR', ')' },
+  { '%', 'M-', 'M+', '_' },
+  { 'O', 'C', 'F', '!' }
 };
 
 uint8_t colPins2[COLS] = { P2C1, P2C2, P2C3, P2C4 }; // Pins connected to C1, C2, C3, C4
@@ -93,6 +93,7 @@ char[20] rawInput; //Keeps raw input as is for display
 char[20] inNum; //Keeps current number being entered
 string[20] inString; //Keeps numbers and operators seperate and in order
 
+int masterptr = 0;
 
 //Global Bools
 bool displayupdated = false;
@@ -117,7 +118,7 @@ void loop() {
   // keypad
 
 
-  //calculate
+  
   
   if (error){
     lcd.clear();
@@ -215,16 +216,32 @@ void updatedisplayonchange(){
 
 
 //Input keypresses
+void addtoarrays(char keys){
+  rawInput[masterptr] = keys;
+  inString[masterptr] = keys;
+  masterptr++;
+}
+
 
 void keypads(){
-  char key1 = keypad.getKey();
-  //char key2 = keypad.getKey()
+  char key1 = keypad1.getKey();
+  char key2 = keypad2.getKey()
   if (key1 != NO_KEY) {
     Serial.println(key1);
     if (isDigit(key1)){
       //add char to input and display arrays
+      addtoarrays(key1);
     } else {
       choosekey(key1);
+    }
+  }
+  if (key2 != NO_KEY) {
+    Serial.println(key2);
+    if (isDigit(key2)){
+      //add char to input and display arrays
+      addtoarrays(key2);
+    } else {
+      choosekey(key2);
     }
   }
 }
