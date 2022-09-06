@@ -215,7 +215,7 @@ void displayitem(char character){
   lcd.print(character);
   cursorx++;
 }
-void printarray(char displayarray){
+void printarray(char displayarray[20]){
   for (int i = 0; i < 20;){
     cursory = 0;
     cursorx = 0;
@@ -225,8 +225,8 @@ void printarray(char displayarray){
 
 void updatedisplayonchange(){
   if (displayupdated == false){
-    printarray(rawInput[])
-    displayupdated == true
+    printarray(rawInput);
+    displayupdated == true;
   }
 }
 
@@ -244,14 +244,14 @@ void addtoarrays(char keys){
 
 void keypads(){
   char key1 = keypad1.getKey();
-  char key2 = keypad2.getKey()
+  char key2 = keypad2.getKey();
   if (key1 != NO_KEY) {
     Serial.println(key1);
     if (isDigit(key1)){
       //add char to input and display arrays
       addtoarrays(key1);
     } else {
-      choosekey(key1);
+      choosefunckey(key1);
     }
   }
   if (key2 != NO_KEY) {
@@ -260,7 +260,7 @@ void keypads(){
       //add char to input and display arrays
       addtoarrays(key2);
     } else {
-      choosekey(key2);
+      choosefunckey(key2);
     }
   }
 }
@@ -270,26 +270,26 @@ void choosefunckey (char key){
   //has to work this way given buttons have more than one use in some cases
   switch (key)
   {
-    case "=":
+    case '=':
       //Execute calculator function
-      calculate(inString[]);
+      calculate(inString);
       break;
-    case "+":
+    case '+':
       //add plus to char array
       addtoarrays(key);
       break;
-    case "-":
+    case '-':
       //add minus to char array
       addtoarrays(key);
       break;
-    case "*":
+    case '*':
       // add mulitply to char array
       addtoarrays(key);
       break;
-    case "/":
+    case '/':
       //Do nothing, not used
       break;
-    case ".":
+    case '.':
       //add decimal point to char array (make float)
       addtoarrays(key);
       break;
