@@ -132,7 +132,8 @@ float calculate(String inputArray[20]) {
   float firstNum;
   float secondNum;
   char readin;
-  for(int i = 0; i < inputArray.length(); i++) {
+  String *arrayAddress = inputArray;
+  for(int i = 0; i < 20; i++) {
     if (inputArray[i] == "*") {
       //multiply
       firstNum = floatMaker(inputArray[i - 1]);
@@ -140,10 +141,10 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      inputArray = reformArray(inputArray, i, firstNum * secondNum);
+      reformArray(arrayAddress, i, firstNum * secondNum);
     }
   }
-  for(int i = 0; i < inputArray.length(); i++) {
+  for(int i = 0; i < 20; i++) {
     if (inputArray[i] == "+") {
       //add
       firstNum = floatMaker(inputArray[i - 1]);
@@ -151,10 +152,10 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      inputArray = reformArray(inputArray, i, firstNum + secondNum);
+      reformArray(arrayAddress, i, firstNum + secondNum);
     }
   }
-  for(int i = 0; i < inputArray.length(); i++) {
+  for(int i = 0; i < 20; i++) {
     if (inputArray[i] == "-") {
       //subtract
       firstNum = floatMaker(inputArray[i - 1]);
@@ -162,14 +163,14 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      inputArray = reformArray(inputArray, i, firstNum - secondNum);
+      reformArray(arrayAddress, i, firstNum - secondNum);
     }
   }
   if (inputArray[1] == "") { //Only one number is left.
-    return inputArray[0];
+    return inputArray[0].toFloat();
   }
   else {
-    Serial.println("Something is wrong.")
+    Serial.println("Something is wrong.");
   }
 }
 
@@ -188,11 +189,11 @@ float floatMaker(String input) {
       }
     }
   }
-  return input.tofloat(); //Turns input string into float and returns 
+  return input.toFloat(); //Turns input string into float and returns 
 }
 
 
-String reformArray[20](String inArray[20], int index, float newValue) {
+void reformArray(String *inArray, int index, float newValue) {
   String newArray[20];
   
   for (int i = 0; i < index - 1; i++){ //Enters all of the arrays items upto the one before the first number used
@@ -203,7 +204,9 @@ String reformArray[20](String inArray[20], int index, float newValue) {
     newArray[i] = inArray[i + 2];
   }
 
-  return newArray[];
+  for (int i = 0; i < 20; i++) {
+    inArray[i] = newArray[i];
+  }
 }
 
 //display functions
