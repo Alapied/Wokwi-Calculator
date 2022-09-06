@@ -231,9 +231,12 @@ void updatedisplayonchange(){
 
 //Input keypresses
 void addtoarrays(char keys){
+  if (masterptr < 20){
   rawInput[masterptr] = keys;
   inString[masterptr] = keys;
   masterptr++;
+  displayupdated = false;
+  }
 }
 
 
@@ -267,21 +270,26 @@ void choosefunckey (char key){
   {
     case "=":
       //Execute calculator function
+      calculate(inString[]);
       break;
     case "+":
       //add plus to char array
+      addtoarrays(key);
       break;
     case "-":
       //add minus to char array
+      addtoarrays(key);
       break;
     case "*":
       // add mulitply to char array
+      addtoarrays(key);
       break;
     case "/":
       //Do nothing, not used
       break;
     case ".":
       //add decimal point to char array (make float)
+      addtoarrays(key);
       break;
   }
 }
