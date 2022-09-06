@@ -137,7 +137,7 @@ float calculate(string[20] inputArray) {
       //multiply
       firstNum = floatMaker(inputArray[i - 1]);
       secondNum = floatMaker(inputArray[i + 1]);
-      if(error = true) { //If error is detected error should be displayed instead.
+      if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
       inputArray = rerformArray(inputArray, i, firstNum * secondNum);
@@ -148,7 +148,7 @@ float calculate(string[20] inputArray) {
       //add
       firstNum = floatMaker(inputArray[i - 1]);
       secondNum = floatMaker(inputArray[i + 1]);
-      if(error = true) { //If error is detected error should be displayed instead.
+      if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
       inputArray = rerformArray(inputArray, i, firstNum + secondNum);
@@ -159,7 +159,7 @@ float calculate(string[20] inputArray) {
       //subtract
       firstNum = floatMaker(inputArray[i - 1]);
       secondNum = floatMaker(inputArray[i + 1]);
-      if(error = true) { //If error is detected error should be displayed instead.
+      if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
       inputArray = rerformArray(inputArray, i, firstNum - secondNum);
@@ -182,6 +182,10 @@ float floatMaker(string input) {
         error = true;
         return 0;
       }
+      if (input.charAt(j - 1) == '.') {
+        error = true;
+        return 0;
+      }
     }
   }
   return input.tofloat(); //Turns input string into float and returns 
@@ -190,6 +194,14 @@ float floatMaker(string input) {
 
 String[20] reformArray(String inArray[20], int index, float newValue) {
   String newArray[20];
+  
+  for (int i = 0; i < index - 1; i++){ //Enters all of the arrays items upto the one before the first number used
+    newArray[i] = inArray[i];
+  }
+  newArray[index - 1] = newValue;
+  for (int i = index; i < 20; i++) {
+    newArray[i] = inArray[i + 2];
+  }
 
   return newArray[];
 }
