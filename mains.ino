@@ -1,7 +1,7 @@
 //Import Libraries
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
-
+#include <Keypad.h>
 
 //Pin Def here
 
@@ -19,17 +19,19 @@
 #define P1C3 28;
 #define P1C4 29;
 
+bool error = false;
+
 const uint8_t ROWS = 4;
 const uint8_t COLS = 4;
-char keys[ROWS][COLS] = {
+char keys1[ROWS][COLS] = {
   { '1', '2', '3', '+' },
   { '4', '5', '6', '-' },
   { '7', '8', '9', '*' },
   { '=', '0', '.', '/' }
 };
 
-uint8_t colPins[COLS] = { P1C1, P1C2, P1C3, P1C4 }; // Pins connected to C1, C2, C3, C4
-uint8_t rowPins[ROWS] = { P1R1, P1R2, P1R3, P1R4 }; // Pins connected to R1, R2, R3, R4
+uint8_t colPins1[COLS] = { P1C1, P1C2, P1C3, P1C4 }; // Pins connected to C1, C2, C3, C4
+uint8_t rowPins1[ROWS] = { P1R1, P1R2, P1R3, P1R4 }; // Pins connected to R1, R2, R3, R4
 
 
 //Keypad 2
@@ -42,6 +44,17 @@ uint8_t rowPins[ROWS] = { P1R1, P1R2, P1R3, P1R4 }; // Pins connected to R1, R2,
 #define P2C2 37;
 #define P2C3 38;
 #define P2C4 39;
+
+char keys2[ROWS][COLS] = {
+  { '1', '2', '3', '+' },
+  { '4', '5', '6', '-' },
+  { '7', '8', '9', '*' },
+  { '=', '0', '.', '/' }
+};
+
+uint8_t colPins2[COLS] = { P2C1, P2C2, P2C3, P2C4 }; // Pins connected to C1, C2, C3, C4
+uint8_t rowPins2[ROWS] = { P2R1, P2R2, P2R3, P2R4 }; // Pins connected to R1, R2, R3, R4
+
 
 //constants
 byte DivisionSymb[] = {
@@ -86,7 +99,8 @@ bool displayupdated = false;
 
 //Device Int
 LiquidCrystal_I2C lcd(0x27,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
-
+Keypad keypad1 = Keypad(makeKeymap(keys1), rowPins1, colPins1, ROWS, COLS);
+Keypad keypad2 = Keypad(makeKeymap(keys2), rowPins2, colPins2, ROWS, COLS);
 
 void setup() {
   // Initalise Env
@@ -100,49 +114,89 @@ void setup() {
 
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // keypad
 
+
+  //calculate
+  
+  if (error){
+    lcd.clear();
+    lcd.setCursor(cursorx,cursory);
+    lcd.print(character);
+    return
+  }
+  //display 
 }
 
 float calculate(string[20] inputArray) {
   float firstNum;
   float secNum;
+  char readin;
   for(int i = 0; i < (inputArray.length()); i++) {
-    if (inputArray[i] == "x") {
+    if (inputArray[i] == "*") {
       //multiply
+      
+      for(int j = 0; j < inputArray[i - 1].length(); j++) { //Validates first number.
+        readin = inputArray[i - 1].charAt(j);
+        if (isDigit(readin) == false) {
+          error = true;
+          return 0;
+        }
+        else {
+          if (j == inputArray[i - 1].length() - 1) {
+            firstNum = inputArray[i - 1];
+          }
+        }
+      }
+
+      for(int j = 0; j < inputArray[i + 1].length(); j++) { //Validates second number.
+        readin = inputArray[i +_ 1].charAt(j);
+        if (isDigit(readin) == false) {
+          error = true;
+          return 0;
+        }
+        else {
+          if (j == inputArray[i - 1].length() - 1) {
+            firstNum = inputArray[i - 1];
+          }
+        }
+      }
     }
-    else if (inputArray[i] == "+") {
+  }
+  for(int i = 0; i < (inputArray.length()); i++) {
+    if (inputArray[i] == "+") {
       //add
     }
-    else if (inputArray[i] == "-") {
+  }
+  for(int i = 0; i < (inputArray.length()); i++) {
+    if (inputArray[i] == "-") {
       //subtract
-    }
-    else if (firstNum == "") {
-      //Nothing in first number
-    }
-    else{
-      //Two numbers entered together
     }
   }
 }
 
-
-//Basic Operands
-float add(float num1, float num2) {
-  return num1 + num2;
+float floatMaker(string input) {
+  char readin;
+  for(int j = 0; j < input.length(); j++) { //Validates first number.
+    readin = input.charAt(j);
+    // if (isDigit(readin) == false) {
+    //   error = true;
+    //   return 0;
+    // }
+    // else {
+    //   if (j == input.length() - 1) {
+    //     return input.toFloat();
+    //   }
+    // }
+  }
 }
 
-float subtract(float num1, float num2) {
-  return num1 - num2;
+
+String[20] reformArray(String inArray[20]) {
+  String newArray[20];
+
+  return newArray[];
 }
-
-float multiply(float num1, float num2) {
-  return num1 * num2;
-}
-
-
-
-
 
 //display functions
 void displayitem(char character){
@@ -154,13 +208,13 @@ void printarray(char displayarray){
   for (int i = 0; i < 20;){
     cursory = 0;
     cursorx = 0;
-    displayitem(rawInput);
+    displayitem(displayarray[i]);
   }
 }
 
 void updatedisplayonchange(){
   if (displayupdated == false){
-    //Update all elements (redraw char array)
+    printarray(rawInput[])
     displayupdated == true
   }
 }
@@ -186,15 +240,23 @@ void choosefunckey (char key){
   //has to work this way given buttons have more than one use in some cases
   switch (key)
   {
-  case "=":
-    
-    break;
-  case "":
-    
-    break;
-  case "=":
-    
-    break;
-
+    case "=":
+      //Execute calculator function
+      break;
+    case "+":
+      //add plus to char array
+      break;
+    case "-":
+      //add minus to char array
+      break;
+    case "*":
+      // add mulitply to char array
+      break;
+    case "/":
+      //Do nothing, not used
+      break;
+    case ".":
+      //add decimal point to char array (make float)
+      break;
   }
 }
