@@ -91,6 +91,7 @@ byte MultiplySymb[] = {
 char rawInput[20]; //Keeps raw input as is for display
 char inNum[20]; //Keeps current number being entered
 String inString[20]; //Keeps numbers and operators seperate and in order
+String inStringCopy[20]; //A copy of the inString to allow for destructive editing
 
 int masterptr = 0;
 int cursorx;
@@ -132,7 +133,6 @@ float calculate(String inputArray[20]) {
   float firstNum;
   float secondNum;
   char readin;
-  String *arrayAddress = inputArray;
   for(int i = 0; i < 20; i++) {
     if (inputArray[i] == "*") {
       //multiply
@@ -141,7 +141,7 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      reformArray(arrayAddress, i, firstNum * secondNum);
+      reformArray(inputArray, i, firstNum * secondNum);
     }
   }
   for(int i = 0; i < 20; i++) {
@@ -152,7 +152,7 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      reformArray(arrayAddress, i, firstNum + secondNum);
+      reformArray(inputArray, i, firstNum + secondNum);
     }
   }
   for(int i = 0; i < 20; i++) {
@@ -163,7 +163,7 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      reformArray(arrayAddress, i, firstNum - secondNum);
+      reformArray(inputArray, i, firstNum - secondNum);
     }
   }
   if (inputArray[1] == "") { //Only one number is left.
@@ -200,11 +200,13 @@ void reformArray(String *inArray, int index, float newValue) {
     newArray[i] = inArray[i];
   }
   newArray[index - 1] = newValue;
-  for (int i = index; i < 20; i++) {
+  for (int i = index; i < 18; i++) { //Moves everything down to fill out the new array.
     newArray[i] = inArray[i + 2];
   }
+  newArray[18] = ""; //Prevents random data from getting put into the new array
+  newArray[19] = "";
 
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < 20; i++) { //Copies the temporary array to the orgininal.
     inArray[i] = newArray[i];
   }
 }
@@ -272,7 +274,10 @@ void choosefunckey (char key){
   {
     case '=':
       //Execute calculator function
-      calculate(inString);
+      for(int i = 0; i < 20; i++) {
+        inStringCopy[i] = inString[i];
+      }
+      calculate(inStringCopy);
       break;
     case '+':
       //add plus to char array
