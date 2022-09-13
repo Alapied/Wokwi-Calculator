@@ -94,6 +94,8 @@ String inString[20]; //Keeps numbers and operators seperate and in order
 String inStringCopy[20]; //A copy of the inString to allow for destructive editing
 
 int masterptr = 0;
+int inNumPos = 0;
+int inStringPos = 0;
 int cursorx;
 int cursory;
 
@@ -124,6 +126,9 @@ void loop() {
     lcd.setCursor(cursorx,cursory);
     lcd.print("Error");
     return;
+  }
+  else{
+    updatedisplayonchange();
   }
   //display 
 
@@ -167,6 +172,7 @@ float calculate(String inputArray[20]) {
     }
   }
   if (inputArray[1] == "") { //Only one number is left.
+    Serial.println(inputArray[0].toFloat());
     return inputArray[0].toFloat();
   }
   else {
@@ -217,8 +223,9 @@ void displayitem(char character){
   lcd.print(character);
   cursorx++;
 }
+
 void printarray(char displayarray[20]){
-  for (int i = 0; i < 20;){
+  for (int i = 0; i < 20; i++){
     cursory = 0;
     cursorx = 0;
     displayitem(displayarray[i]);
@@ -228,7 +235,7 @@ void printarray(char displayarray[20]){
 void updatedisplayonchange(){
   if (displayupdated == false){
     printarray(rawInput);
-    displayupdated == true;
+    displayupdated = true;
   }
 }
 
@@ -236,10 +243,32 @@ void updatedisplayonchange(){
 //Input keypresses
 void addtoarrays(char keys){
   if (masterptr < 20){
-  rawInput[masterptr] = keys;
-  inString[masterptr] = keys;
-  masterptr++;
-  displayupdated = false;
+    rawInput[masterptr] = keys;
+    if(isDigit(keys) || keys == '.') { //Digit or decial place
+      inNum[inNumPos] = keys;
+      inNumPos++;
+    }
+    else{ //Fucntion key pressed
+      String inputtedNumber = "";
+      for (int i = 0; i < inNumPos; i++) {
+        inputtedNumber += inNum[i];
+      }
+      inString[inStringPos] = inputtedNumber;
+      if (keys != '=') {
+        inString[inStringPos + 1] = keys;
+        inStringPos += 2;
+      }
+      inNumPos = 0;
+      for(int i = 0; i < inStringPos + 1; i++) {
+        Serial.println(inString[i]);
+      }
+    }
+    masterptr++;
+    displayupdated = false;
+    // for(int i = 0; i < masterptr + 1; i++) {
+    //   Serial.print(rawInput[i]);
+    // }
+    // Serial.println();
   }
 }
 
@@ -274,9 +303,12 @@ void choosefunckey (char key){
   {
     case '=':
       //Execute calculator function
+      addtoarrays(key);
       for(int i = 0; i < 20; i++) {
         inStringCopy[i] = inString[i];
+        Serial.print(inStringCopy[i]);
       }
+      Serial.println("");
       calculate(inStringCopy);
       break;
     case '+':
