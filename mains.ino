@@ -184,7 +184,7 @@ float calculate(String inputArray[20]) {
   }
   if (inputArray[1] == "") { //Only one number is left.
     Serial.println(inputArray[0].toFloat());
-    lcd.setCursor(0,4);
+    lcd.setCursor(0,3);
     lcd.println(inputArray[0].toFloat());
     calc = true;
     return inputArray[0].toFloat();
