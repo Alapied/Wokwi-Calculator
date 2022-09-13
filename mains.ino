@@ -18,8 +18,6 @@
 #define P1C3 28
 #define P1C4 29
 
-bool error = false;
-
 const uint8_t ROWS = 4;
 const uint8_t COLS = 4;
 char keys1[ROWS][COLS] = {
@@ -103,6 +101,8 @@ int cursory = 0;
 bool displayupdated = false;
 bool calc = false;
 bool on = true;
+bool error = false;
+bool errorShown = false;
 
 //Device Int
 LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
@@ -123,13 +123,14 @@ void setup() {
 void loop() {
   // keypad
   keypads();
-  if (error){
+  if (error && errorShown == false){
     lcd.clear();
-    lcd.setCursor(cursorx,cursory);
+    lcd.setCursor(0,0);
     lcd.print("Error");
+    errorShown = true;
     return;
   }
-  else{
+  else if (error == false){
     updatedisplayonchange();
     if (calc){
       resetarrays();
@@ -148,7 +149,6 @@ void(* resetFunc) (void) = 0;
 float calculate(String inputArray[20]) {
   float firstNum;
   float secondNum;
-  char readin;
   for(int i = 0; i < 20; i++) {
     if (inputArray[i] == "*") {
       //multiply
@@ -183,7 +183,6 @@ float calculate(String inputArray[20]) {
     }
   }
   if (inputArray[1] == "") { //Only one number is left.
-    Serial.println(inputArray[0].toFloat());
     lcd.setCursor(0,3);
     lcd.println(inputArray[0].toFloat());
     calc = true;
@@ -199,12 +198,14 @@ float floatMaker(String input) {
   for(int j = 0; j < input.length(); j++) {
     readin = input.charAt(j);
     if (isdigit(readin) == false) {
-      if (readin != '.' && readin != '-') { //Not a digit or decial place
+      if (readin != '.' && readin != '-') { //Not a digit or decimal place
         error = true;
+        Serial.println("error set true, invalid char");
         return 0;
       }
-      else if (input.charAt(j - 1) == '.') {
+      else if (input.charAt(j - 1) == '.' || input.charAt(j + 1) == '.') {
         error = true;
+        Serial.println("error set true, double decimal");
         return 0;
       }
     }
@@ -294,21 +295,25 @@ void addtoarrays(char keys){
     }
     else{ //Function key pressed
       String inputtedNumber = "";
-      for (int i = 0; i < inNumPos; i++) {
-        inputtedNumber += inNum[i];
+      if(inNum[0] != '\0') {  //True if any numbers were entered
+        for (int i = 0; i < inNumPos; i++) {
+          inputtedNumber += inNum[i];
+        }
+        for (int i = 0; i < 20; i++) {
+          inNum[i] = '\0';
+        }
+        inString[inStringPos] = inputtedNumber;
+        if (keys != '=') {
+          inString[inStringPos + 1] = keys;
+         inStringPos += 2;
+        }
+        inNumPos = 0;
       }
-      for (int i = 0; i < 20; i++) {
-        inNum[i] = '\0';
+      else{ //No numbers were entered eg. double operator
+        inString[inStringPos] = keys;
+        inStringPos += 1;
       }
-      inString[inStringPos] = inputtedNumber;
-      if (keys != '=') {
-        inString[inStringPos + 1] = keys;
-        inStringPos += 2;
-      }
-      inNumPos = 0;
-      for(int i = 0; i < inStringPos + 1; i++) {
-        Serial.println(inString[i]);
-      }
+      
     }
     masterptr++;
     displayupdated = false;
@@ -356,9 +361,7 @@ void choosefunckey (char key){
       addtoarrays(key);
       for(int i = 0; i < 20; i++) {
         inStringCopy[i] = inString[i];
-        Serial.print(inStringCopy[i]);
       }
-      Serial.println("");
       calculate(inStringCopy);
       reset();
       break;
