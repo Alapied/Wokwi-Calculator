@@ -102,6 +102,7 @@ int cursory = 0;
 //Global Bools
 bool displayupdated = false;
 bool calc = false;
+bool on = true;
 
 //Device Int
 LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
@@ -322,6 +323,9 @@ void addtoarrays(char keys){
 void keypads(){
   char key1 = keypad1.getKey();
   char key2 = keypad2.getKey();
+  if (on == false && key2 != 'O') {
+    return;
+  }
   if (key1 != NO_KEY) {
     //Serial.println(key1);
     if (isDigit(key1)){
@@ -379,9 +383,11 @@ void choosefunckey (char key){
       break;
     case 'O':
       resetFunc();
+      on = true;
     break;
     case 'F' :
       lcd.noBacklight();
+      on = false;
     break;
   }
 }
