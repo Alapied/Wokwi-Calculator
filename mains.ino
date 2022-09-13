@@ -131,6 +131,7 @@ void loop() {
   else{
     updatedisplayonchange();
     if (calc){
+      resetarrays();
       cursorx = 0;
       cursory = 0;
       lcd.setCursor(0,0);
@@ -211,7 +212,8 @@ float floatMaker(String input) {
 }
 //array modules
 void resetarrays(){
-   for (int i = 0; i < sizeof(rawInput) / sizeof(rawInput[0]); i++)
+  masterptr = 0;
+  for (int i = 0; i < sizeof(rawInput) / sizeof(rawInput[0]); i++)
       {
        rawInput[i] = {NULL};
       }
