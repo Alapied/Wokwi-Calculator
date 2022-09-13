@@ -209,12 +209,29 @@ float floatMaker(String input) {
   }
   return input.toFloat(); //Turns input string into float and returns 
 }
+
+void reset() {
+  resetarrays();
+  resetCounters();
+}
+
 //array modules
 void resetarrays(){
-   for (int i = 0; i < sizeof(rawInput) / sizeof(rawInput[0]); i++)
-      {
-       rawInput[i] = {NULL};
-      }
+  for (int i = 0; i < 20; i++)
+  {
+    rawInput[i] = '\0';
+    inString[i] = "";
+    inStringCopy[i] = "";
+    inNum[i] = '\0';
+  }
+}
+
+void resetCounters() {
+  masterptr = 0;
+  inNumPos = 0;
+  inStringPos = 0;
+  cursorx = 0;
+  cursory = 0;
 }
 
 
@@ -261,6 +278,12 @@ void updatedisplayonchange(){
 
 //Input keypresses
 void addtoarrays(char keys){
+  if (calc = true) {
+    lcd.clear();
+    lcd.setCursor(cursorx,cursory);
+    calc = false;
+  } 
+
   if (masterptr < 20){
     rawInput[masterptr] = keys;
     if(isDigit(keys) || keys == '.') { //Digit or decimal place
@@ -271,6 +294,9 @@ void addtoarrays(char keys){
       String inputtedNumber = "";
       for (int i = 0; i < inNumPos; i++) {
         inputtedNumber += inNum[i];
+      }
+      for (int i = 0; i < 20; i++) {
+        inNum[i] = '\0';
       }
       inString[inStringPos] = inputtedNumber;
       if (keys != '=') {
@@ -329,6 +355,7 @@ void choosefunckey (char key){
       }
       Serial.println("");
       calculate(inStringCopy);
+      reset();
       break;
     case '+':
       //add plus to char array
