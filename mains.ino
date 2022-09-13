@@ -131,6 +131,7 @@ void loop() {
   else{
     updatedisplayonchange();
     if (calc){
+      resetarrays();
       cursorx = 0;
       cursory = 0;
       lcd.setCursor(0,0);
