@@ -96,22 +96,23 @@ String inStringCopy[20]; //A copy of the inString to allow for destructive editi
 int masterptr = 0;
 int inNumPos = 0;
 int inStringPos = 0;
-int cursorx;
-int cursory;
+int cursorx = 0;
+int cursory = 0;
 
 //Global Bools
 bool displayupdated = false;
+bool calc = false;
 
 //Device Int
-LiquidCrystal_I2C lcd(0x27,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 Keypad keypad1 = Keypad(makeKeymap(keys1), rowPins1, colPins1, ROWS, COLS);
 Keypad keypad2 = Keypad(makeKeymap(keys2), rowPins2, colPins2, ROWS, COLS);
 
 void setup() {
   // Initalise Env
   Serial.begin(9600);
-  
-
+  lcd.init();                     
+  lcd.backlight();
   // Password Protection
   //Serial.println("Enter Password before ")
   //Enter password  
@@ -129,10 +130,18 @@ void loop() {
   }
   else{
     updatedisplayonchange();
+    if (calc){
+      cursorx = 0;
+      cursory = 0;
+      lcd.setCursor(0,0);
+      calc = false;
+    }
   }
   //display 
 
 }
+
+void(* resetFunc) (void) = 0;
 
 float calculate(String inputArray[20]) {
   float firstNum;
@@ -173,6 +182,9 @@ float calculate(String inputArray[20]) {
   }
   if (inputArray[1] == "") { //Only one number is left.
     Serial.println(inputArray[0].toFloat());
+    lcd.setCursor(0,4);
+    lcd.println(inputArray[0].toFloat());
+    calc = true;
     return inputArray[0].toFloat();
   }
   else {
@@ -197,6 +209,13 @@ float floatMaker(String input) {
   }
   return input.toFloat(); //Turns input string into float and returns 
 }
+//array modules
+void resetarrays(){
+   for (int i = 0; i < sizeof(rawInput) / sizeof(rawInput[0]); i++)
+      {
+       rawInput[i] = {NULL};
+      }
+}
 
 
 void reformArray(String *inArray, int index, float newValue) {
@@ -212,7 +231,7 @@ void reformArray(String *inArray, int index, float newValue) {
   newArray[18] = ""; //Prevents random data from getting put into the new array
   newArray[19] = "";
 
-  for (int i = 0; i < 20; i++) { //Copies the temporary array to the orgininal.
+  for (int i = 0; i < 20; i++) { //Copies the temporary array to the orginal.
     inArray[i] = newArray[i];
   }
 }
@@ -225,9 +244,9 @@ void displayitem(char character){
 }
 
 void printarray(char displayarray[20]){
-  for (int i = 0; i < 20; i++){
     cursory = 0;
     cursorx = 0;
+  for (int i = 0; i < 20; i++){
     displayitem(displayarray[i]);
   }
 }
@@ -244,11 +263,11 @@ void updatedisplayonchange(){
 void addtoarrays(char keys){
   if (masterptr < 20){
     rawInput[masterptr] = keys;
-    if(isDigit(keys) || keys == '.') { //Digit or decial place
+    if(isDigit(keys) || keys == '.') { //Digit or decimal place
       inNum[inNumPos] = keys;
       inNumPos++;
     }
-    else{ //Fucntion key pressed
+    else{ //Function key pressed
       String inputtedNumber = "";
       for (int i = 0; i < inNumPos; i++) {
         inputtedNumber += inNum[i];
@@ -277,7 +296,7 @@ void keypads(){
   char key1 = keypad1.getKey();
   char key2 = keypad2.getKey();
   if (key1 != NO_KEY) {
-    Serial.println(key1);
+    //Serial.println(key1);
     if (isDigit(key1)){
       //add char to input and display arrays
       addtoarrays(key1);
@@ -286,7 +305,7 @@ void keypads(){
     }
   }
   if (key2 != NO_KEY) {
-    Serial.println(key2);
+    //Serial.println(key2);
     if (isDigit(key2)){
       //add char to input and display arrays
       addtoarrays(key2);
@@ -330,5 +349,11 @@ void choosefunckey (char key){
       //add decimal point to char array (make float)
       addtoarrays(key);
       break;
+    case 'O':
+      resetFunc();
+    break;
+    case 'F' :
+      lcd.noBacklight();
+    break;
   }
 }
