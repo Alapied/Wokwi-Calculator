@@ -183,8 +183,6 @@ float calculate(String inputArray[20]) {
     }
   }
   if (inputArray[1] == "") { //Only one number is left.
-    lcd.setCursor(0,3);
-    lcd.println(inputArray[0].toFloat());
     calc = true;
     return inputArray[0].toFloat();
   }
@@ -362,7 +360,10 @@ void choosefunckey (char key){
       for(int i = 0; i < 20; i++) {
         inStringCopy[i] = inString[i];
       }
-      calculate(inStringCopy);
+      float result;
+      result = calculate(inStringCopy);
+      lcd.setCursor(0,3);
+    lcd.println(result);
       reset();
       break;
     case '+':
