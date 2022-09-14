@@ -158,6 +158,7 @@ float calculate(String inputArray[20]) {
         return 0;
       }
       reformArray(inputArray, i, firstNum * secondNum);
+      i--;
     }
   }
   for(int i = 0; i < 20; i++) {
@@ -169,6 +170,7 @@ float calculate(String inputArray[20]) {
         return 0;
       }
       reformArray(inputArray, i, firstNum + secondNum);
+      i--;
     }
   }
   for(int i = 0; i < 20; i++) {
@@ -180,6 +182,7 @@ float calculate(String inputArray[20]) {
         return 0;
       }
       reformArray(inputArray, i, firstNum - secondNum);
+      i--;
     }
   }
   if (inputArray[1] == "") { //Only one number is left.
