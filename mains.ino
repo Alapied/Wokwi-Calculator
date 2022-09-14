@@ -390,6 +390,7 @@ void choosefunckey (char key){
     break;
     case 'F' :
       lcd.noBacklight();
+      lcd.clear();
       on = false;
     break;
   }
