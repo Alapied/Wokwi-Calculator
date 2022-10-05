@@ -2,6 +2,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 #include <Keypad.h>
+#include <math.h>
 
 //Pin Def here
 
@@ -149,6 +150,21 @@ void(* resetFunc) (void) = 0;
 float calculate(String inputArray[20]) {
   float firstNum;
   float secondNum;
+  for(int i = 0; i < 20; i++) { //Bracket
+    if (inputArray[i] == "(") {
+
+    }
+  }
+  for(int i = 0; i < 20; i++) { //Root
+    if (inputArray[i] == "R") {
+      
+    }
+  }
+  for(int i = 0; i < 20; i++) { //Division
+    if (inputArray[i] == "/") {
+      
+    }
+  }
   for(int i = 0; i < 20; i++) {
     if (inputArray[i] == "*") {
       //multiply
@@ -212,6 +228,21 @@ float floatMaker(String input) {
     }
   }
   return input.toFloat(); //Turns input string into float and returns 
+}
+
+int bracketFinder(int startBacket) { //Find the indexes of the close of a bracket
+  int openBrackets = 1;
+  for (int i = startBacket; i < 20; i++) {  
+    if (inputArray[i] == "(") {
+      openBrackets++;
+    }
+    else if (openBrackets = ")") {
+      openBrackets--;
+    }
+    if (openBrackets == 0) {
+      return i;
+    }
+  }
 }
 
 void reset() {
