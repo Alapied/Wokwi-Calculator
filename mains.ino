@@ -137,8 +137,14 @@ void setup() {
   // Initalise Env
   initEnv();
   // Password Protection
-  //Serial.println("Enter Password before ")
+  Serial.println("Enter Password: ");
   //Enter password  
+  String password = readSerial();
+  if (password == ActualPassword){
+
+  } else {
+    Serial.print
+  }
 }
 void initEnv(){
   Serial.begin(9600);
@@ -147,6 +153,13 @@ void initEnv(){
   interruptsetup();
   passwordcheck();
   wipememory();
+}
+String readSerial(){
+  while (Serial.available() == 0){}
+  while (Serial.available() > 0 ){
+   String Output = Serial.readString();
+  }
+  return Output;
 }
 void interruptsetup(){
   for (int i = 22; i <=25; i++){
