@@ -4,6 +4,8 @@
 #include <Keypad.h>
 #include <math.h>
 #include <EEEPROM.h>
+#include <RTClib.h>
+#include <dht.h>
 
 
 //Pin Def here
@@ -55,9 +57,15 @@ char keys2[ROWS][COLS] = {
 //X MR
 //V M-
 //B M+
+//_ Fn
 uint8_t colPins2[COLS] = { P2C1, P2C2, P2C3, P2C4 }; // Pins connected to C1, C2, C3, C4
 uint8_t rowPins2[ROWS] = { P2R1, P2R2, P2R3, P2R4 }; // Pins connected to R1, R2, R3, R4
 
+//RTC init
+RTC_DS1307 rtc;
+
+//DHT init
+dht DHT;
 
 //constants
 byte DivisionSymb[] = {
@@ -102,6 +110,7 @@ int inNumPos = 0;
 int inStringPos = 0;
 int cursorx = 0;
 int cursory = 0;
+char mode = '0'; //0 is calc, 1 is temp/humidity, 2 is time.
 
 //Global Bools
 bool displayupdated = false;
@@ -137,24 +146,38 @@ void interruptsetup(){
   }
 }
 void loop() {
-  if (error && errorShown == false){
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.print("Error");
-    errorShown = true;
-    return;
-  }
-  else if (error == false){
-    updatedisplayonchange();
-    if (calc){
-      resetarrays();
-      cursorx = 0;
-      cursory = 0;
-      lcd.setCursor(0,0);
-      calc = false;
-    }
+  switch (mode) {
+    case '0': //Calc mode
+      if (error && errorShown == false){
+        lcd.clear();
+        lcd.setCursor(0,0);
+        lcd.print("Error");
+        errorShown = true;
+      return;
+      }
+      else if (error == false){
+        updatedisplayonchange();
+        if (calc){
+          resetarrays();
+          cursorx = 0;
+          cursory = 0;
+          lcd.setCursor(0,0);
+          calc = false;
+        }
+      }
+
+    case '1': //Temp & humidity mode
+      displayTemp();
+      
+    case '2':
+      displayTime();
+
+    default:
+      Serial.println("Mode char out of range error");
+
   }
 }
+  
 
 void(* resetFunc) (void) = 0;
 
@@ -341,6 +364,40 @@ void updatedisplayonchange(){
   }
 }
 
+void displayTemp() {
+  DHT.read22(7);
+  int humidity = DHT.humidity;
+  float temp = DHT.temperature;
+  if (temp < 0) {
+    lcd.setCursor(1, 7);
+    lcd.print(temp);
+    lcd.print("C");
+  }
+  else {
+    lcd.setCursor(1, 8);
+    lcd.print(temp);
+    lcd.print("C");
+  }
+
+  if (temp == 100) {
+    lcd.setCursor(2, 7);
+    lcd.print(humidity);
+    lcd.print("%");
+  }
+  else {
+    lcd.setCursor(2, 8);
+    lcd.print(humidity);
+    lcd.print("%");
+  }
+}
+
+void displayTime() {
+  DateTime now = rtc.now();
+  char time[20];
+  sprintf(time, "%02d:%02d:%02d", now.hour(), now.minute(), now.second())
+  lcd.setCursor(1, 6);
+  lcd.println(time);
+}
 
 //Input keypresses
 void addtoarrays(char keys){
@@ -403,6 +460,10 @@ void subFromArrays(){
     inNum[inNumPos] = '/0';
     displayupdated = false;
 
+  }
+  else {
+    inStringPos--;
+    inString[inStringPos] = "";
   }
 }
 
