@@ -46,12 +46,15 @@ uint8_t rowPins1[ROWS] = { P1R1, P1R2, P1R3, P1R4 }; // Pins connected to R1, R2
 #define P2C4 39
 
 char keys2[ROWS][COLS] = {
-  { 'T', 'CE', '<', '(' },
-  { 'R', 'MC', 'MR', ')' },
-  { '%', 'M-', 'M+', '_' },
+  { 'T', 'E', '<', '(' },
+  { 'R', 'Z', 'X', ')' },
+  { '%', 'V', 'B', '_' },
   { 'O', 'C', 'F', '!' }
 };
-
+//Z MC
+//X MR
+//V M-
+//B M+
 uint8_t colPins2[COLS] = { P2C1, P2C2, P2C3, P2C4 }; // Pins connected to C1, C2, C3, C4
 uint8_t rowPins2[ROWS] = { P2R1, P2R2, P2R3, P2R4 }; // Pins connected to R1, R2, R3, R4
 
@@ -445,6 +448,21 @@ void choosefunckey (char key){
       lcd.noBacklight();
       lcd.clear();
       on = false;
+    break;
+    case 'E' :
+      //CLear everything
+    break;
+    case 'Z' :
+      //CLear everything
+    break;
+    case 'X' :
+      //CLear everything
+    break;
+    case 'V' :
+      //CLear everything
+    break;
+    case 'B' :
+      //CLear everything
     break;
   }
 }
