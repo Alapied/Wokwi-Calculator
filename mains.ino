@@ -402,9 +402,28 @@ void subFromArrays(){
     inNumPos--;
     inNum[inNumPos] = '/0';
     displayupdated = false;
+
   }
 }
 
+String readEEPROM(int startadd,int stopadd){
+  string Output = "";
+  for (i = startadd; i <= stopadd; i++){
+    char temp = EEPROM.read(i);
+    Output + temp;
+  }
+  return Output;
+}
+
+void writeEEPROM(int startadd,int stopadd, String msg){
+  int j = 0;
+  for (i = startadd; i <= stopadd; i++){
+    if (j < msg.length()){
+      char temp = msg.charAt(j);
+      EEPROM.write(i,temp);
+    }
+  }
+}
 
 void keypads(){
   char key1 = keypad1.getKey();
@@ -477,20 +496,26 @@ void choosefunckey (char key){
       lcd.clear();
       on = false;
     break;
+    case 'C' :
+      //Clear Last digit
+      
+    break;
     case 'E' :
-      //CLear everything
+      //Clear Everything
+      reset();
     break;
     case 'Z' :
-      //CLear everything
+      //Memory Clear
     break;
     case 'X' :
-      //CLear everything
+      //Memory Recall
     break;
     case 'V' :
-      //CLear everything
+      //Memory Add
     break;
     case 'B' :
-      //CLear everything
+      //Memory Subtract
     break;
+    
   }
 }
