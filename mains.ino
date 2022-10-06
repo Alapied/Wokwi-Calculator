@@ -3,6 +3,8 @@
 #include <Wire.h>
 #include <Keypad.h>
 #include <math.h>
+#include <EEEPROM.h>
+
 
 //Pin Def here
 
@@ -112,18 +114,26 @@ Keypad keypad2 = Keypad(makeKeymap(keys2), rowPins2, colPins2, ROWS, COLS);
 
 void setup() {
   // Initalise Env
-  Serial.begin(9600);
-  lcd.init();                     
-  lcd.backlight();
+  initEnv();
   // Password Protection
   //Serial.println("Enter Password before ")
   //Enter password  
 }
-
-
+void initEnv(){
+  Serial.begin(9600);
+  lcd.init();                     
+  lcd.backlight();
+  interruptsetup();
+}
+void interruptsetup(){
+  for (int i = 22; i <=25; i++){
+    attachInterrupt(digitalPinToInterrupt(i), keypads(), RISING)
+  }
+  for (int j = 32; j<=35; j++){
+    attachInterrupt(digitalPinToInterrupt(j), keypads(), RISING)
+  }
+}
 void loop() {
-  // keypad
-  keypads();
   if (error && errorShown == false){
     lcd.clear();
     lcd.setCursor(0,0);
@@ -141,8 +151,6 @@ void loop() {
       calc = false;
     }
   }
-  //display 
-
 }
 
 void(* resetFunc) (void) = 0;
@@ -423,7 +431,7 @@ void choosefunckey (char key){
       addtoarrays(key);
       break;
     case '/':
-      //Do nothing, not used
+      addtoarrays(key);
       break;
     case '.':
       //add decimal point to char array (make float)
