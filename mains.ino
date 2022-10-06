@@ -137,15 +137,45 @@ void setup() {
   // Initalise Env
   initEnv();
   // Password Protection
-  Serial.println("Enter Password: ");
-  //Enter password  
-  String password = readSerial();
-  if (password == ActualPassword){
-
-  } else {
-    Serial.print
+  bool passwordCorrect = false;
+  while (passwordCorrect == false) {
+    Serial.println("Enter Password: ");
+    //Enter password  
+    String password = readSerial();
+    if (password == ActualPassword){
+      passwordCorrect = true;
+    } else {
+      Serial.print("Incorrect")
+    }
   }
+
+  //Menu
+  bool menu = true;
+  while (menu) {
+    Serial.println("Welcome!");
+    Serial.println("Please select and option.");
+    Serial.println("1: Change default LCD text.");
+    Serial.println("2: Display LDR sensor data.");
+    Serial.println("3: Enter the calculator");
+    while (Serial.avaliable == 0) {}
+    Serial.flush();
+    char input = Serial.read();
+    switch (input) {
+      case '1':
+        changeInitText();
+      break;
+      case '2':
+        disLDR();
+      break;
+      case '3':
+        menu = false;
+      break;
+    }
+  }
+
+
 }
+
 void initEnv(){
   Serial.begin(9600);
   lcd.init();                     
@@ -154,13 +184,16 @@ void initEnv(){
   passwordcheck();
   wipememory();
 }
+
 String readSerial(){
   while (Serial.available() == 0){}
   while (Serial.available() > 0 ){
+    Serial.flush();
    String Output = Serial.readString();
   }
   return Output;
 }
+
 void interruptsetup(){
   for (int i = 22; i <=25; i++){
     attachInterrupt(digitalPinToInterrupt(i), keypads(), RISING)
@@ -169,6 +202,7 @@ void interruptsetup(){
     attachInterrupt(digitalPinToInterrupt(j), keypads(), RISING)
   }
 }
+
 void passwordcheck(){
   int passwordresetval = EEPROM.read(PasswordAddress + PasswordSpace);//Read last val of password
   if (passwordresetval == 255){
@@ -176,12 +210,17 @@ void passwordcheck(){
   } 
   ActualPassword = readEEPROM(PasswordAddress, PasswordSpace - 1);
 }
+
 void wipememory(){
   int zeroed
   int memoryresetval = EEPROM.read(MemoryAddress + MemorySpace);//Read last val of memory
   if (memoryresetval == 255){
     writeEEPROM(MemoryAddress, MemorySpace - 1, );
   } 
+}
+
+void changeInitText() {
+
 }
 
 void loop() {
@@ -205,7 +244,7 @@ void loop() {
         }
       }
     break;
-    
+
     case '1': //Temp & humidity mode
       displayTemp();
     break;
