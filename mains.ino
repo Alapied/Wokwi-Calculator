@@ -204,16 +204,19 @@ void loop() {
           calc = false;
         }
       }
-
+    break;
+    
     case '1': //Temp & humidity mode
       displayTemp();
+    break;
       
     case '2':
       displayTime();
+    break;
 
     default:
       Serial.println("Mode char out of range error");
-
+    break;
   }
 }
   
