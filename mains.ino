@@ -165,8 +165,9 @@ float calculate(String inputArray[20]) {
       for (int j = i + 1; j < closeIndex; j++) {
         tempArray[j - i + 1] = tempArray[j];
       }
-      int value = calculate(tempArray);
-      
+      float value = calculate(tempArray);
+      closeIndex = bracketFinder(i);
+
     }
   }
   for(int i = 0; i < 20; i++) { //Root
@@ -288,13 +289,13 @@ void resetCounters() {
 }
 
 
-void reformArray(String *inArray, int index, float newValue) {
+void reformArray(String *inArray, int startIndex, int closeIndex, float newValue) {
   String newArray[20];
   
-  for (int i = 0; i < index - 1; i++){ //Enters all of the arrays items upto the one before the first number used
+  for (int i = 0; i < startIndex - 1; i++){ //Enters all of the arrays items upto the one before the first number used
     newArray[i] = inArray[i];
   }
-  newArray[index - 1] = newValue;
+  newArray[startIndex - 1] = newValue;
   for (int i = index; i < 18; i++) { //Moves everything down to fill out the new array.
     newArray[i] = inArray[i + 2];
   }
