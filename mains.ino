@@ -98,6 +98,9 @@ byte MultiplySymb[] = {
   B10001,
   B00000
 };
+
+String DefaultPassword = "EEE20003";
+String ActualPassword = "";
 //Arrays
 
 char rawInput[20]; //Keeps raw input as is for display
@@ -111,6 +114,12 @@ int inStringPos = 0;
 int cursorx = 0;
 int cursory = 0;
 char mode = '0'; //0 is calc, 1 is temp/humidity, 2 is time.
+
+//EEPROM
+int MemoryAddress = 21;
+int MemorySpace = 21; // last digit is the reset bool
+int PasswordAddress = 0;
+int PasswordSpace = 21;
 
 //Global Bools
 bool displayupdated = false;
@@ -136,6 +145,8 @@ void initEnv(){
   lcd.init();                     
   lcd.backlight();
   interruptsetup();
+  passwordcheck();
+  wipememory();
 }
 void interruptsetup(){
   for (int i = 22; i <=25; i++){
@@ -145,6 +156,21 @@ void interruptsetup(){
     attachInterrupt(digitalPinToInterrupt(j), keypads(), RISING)
   }
 }
+void passwordcheck(){
+  int passwordresetval = EEPROM.read(PasswordAddress + PasswordSpace);//Read last val of password
+  if (passwordresetval == 255){
+    writeEEPROM(PasswordAddress, PasswordSpace - 1, DefaultPassword)
+  } 
+  ActualPassword = readEEPROM(PasswordAddress, PasswordSpace - 1);
+}
+void wipememory(){
+  int zeroed
+  int memoryresetval = EEPROM.read(MemoryAddress + MemorySpace);//Read last val of memory
+  if (memoryresetval == 255){
+    writeEEPROM(MemoryAddress, MemorySpace - 1, );
+  } 
+}
+
 void loop() {
   switch (mode) {
     case '0': //Calc mode
