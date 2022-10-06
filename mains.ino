@@ -170,17 +170,26 @@ float calculate(String inputArray[20]) {
       }
       float value = calculate(tempArray);
       closeIndex = bracketFinder(i);
-
+      reformArray(inputArray, i, closeIndex, value);
     }
   }
   for(int i = 0; i < 20; i++) { //Root
     if (inputArray[i] == "R") {
-      
+      firstNum = floatMaker(inputArray[i + 1]);
+      if (error = true) {
+        return 0;
+      }
+      reformArray(inputArray, i, i + 1; sqrt(firstNum));
     }
   }
   for(int i = 0; i < 20; i++) { //Division
     if (inputArray[i] == "/") {
-      
+      firstNum = floatMaker(inputArray[i - 1]);
+      secondNum = floatMaker(inputArray[i - 1]);
+      if (error = true) {
+        return 0;
+      }
+      reformArray(inputArray, i, i + 1, firstNum / secondNum);
     }
   }
   for(int i = 0; i < 20; i++) {
@@ -191,7 +200,7 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      reformArray(inputArray, i, firstNum * secondNum);
+      reformArray(inputArray, i, i + 1, firstNum * secondNum);
       i--;
     }
   }
@@ -203,7 +212,7 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      reformArray(inputArray, i, firstNum + secondNum);
+      reformArray(inputArray, i, i + 1, firstNum + secondNum);
       i--;
     }
   }
@@ -215,7 +224,7 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      reformArray(inputArray, i, firstNum - secondNum);
+      reformArray(inputArray, i, i + 1, firstNum - secondNum);
       i--;
     }
   }
@@ -299,12 +308,12 @@ void reformArray(String *inArray, int startIndex, int closeIndex, float newValue
     newArray[i] = inArray[i];
   }
   newArray[startIndex - 1] = newValue;
-  for (int i = index; i < 18; i++) { //Moves everything down to fill out the new array.
-    newArray[i] = inArray[i + 2];
+  for (int i = startIndex; i < (20 - (closeIndex - startIndex); i++) { //Moves everything down to fill out the new array.
+    newArray[i] = inArray[i + (closeIndex - startIndex)];
   }
-  newArray[18] = ""; //Prevents random data from getting put into the new array
-  newArray[19] = "";
-
+  for (int i = 20 - (closeIndex - startIndex); i < 20; i++ {
+    newArray[i] = ""; //Prevents random data from getting put into the new array
+  }
   for (int i = 0; i < 20; i++) { //Copies the temporary array to the orginal.
     inArray[i] = newArray[i];
   }
@@ -375,6 +384,24 @@ void addtoarrays(char keys){
     //   Serial.print(rawInput[i]);
     // }
     // Serial.println();
+  }
+}
+
+void subFromArrays(){
+  if (calc = true) {
+    lcd.clear();
+    lcd.setCursor(cursorx,cursory);
+    calc = false;
+  }
+  if (masterptr > 0){
+    masterptr--;
+    rawInput[masterptr] = '\0';
+    displayupdated = false;
+  }
+  if (inNum[0] != '\0') {
+    inNumPos--;
+    inNum[inNumPos] = '/0';
+    displayupdated = false;
   }
 }
 
