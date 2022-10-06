@@ -152,7 +152,13 @@ float calculate(String inputArray[20]) {
   float secondNum;
   for(int i = 0; i < 20; i++) { //Bracket
     if (inputArray[i] == "(") {
-
+      int closeIndex = bracketFinder(i);
+      String tempArray[20];
+      for (int j = i + 1; j < closeIndex; j++) {
+        tempArray[j - i + 1] = tempArray[j];
+      }
+      int value = calculate(tempArray);
+      
     }
   }
   for(int i = 0; i < 20; i++) { //Root
@@ -212,6 +218,7 @@ float calculate(String inputArray[20]) {
 
 float floatMaker(String input) {
   char readin;
+  bool dec = false;
   for(int j = 0; j < input.length(); j++) {
     readin = input.charAt(j);
     if (isdigit(readin) == false) {
@@ -220,10 +227,13 @@ float floatMaker(String input) {
         Serial.println("error set true, invalid char");
         return 0;
       }
-      else if (input.charAt(j - 1) == '.' || input.charAt(j + 1) == '.') {
-        error = true;
-        Serial.println("error set true, double decimal");
-        return 0;
+      else if (input.charAt(j) == '.' {
+        if (dec) {
+          error = true;
+          Serial.println("error - too many decimals")
+          return 0;
+        }
+        dec = true;
       }
     }
   }
