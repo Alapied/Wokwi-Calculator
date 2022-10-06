@@ -616,6 +616,19 @@ void choosefunckey (char key){
     case 'B' :
       //Memory Subtract
     break;
+    case '_':
+      switch (mode){
+        case '0':
+          case = '1';
+        break;
+        case '1':
+          case = '2';
+        break;
+        case '2':
+          case = '0';
+        break;
+      }
+    break;
     
   }
 }
