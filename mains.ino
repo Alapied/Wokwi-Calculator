@@ -61,11 +61,6 @@ char keys2[ROWS][COLS] = {
 uint8_t colPins2[COLS] = { P2C1, P2C2, P2C3, P2C4 }; // Pins connected to C1, C2, C3, C4
 uint8_t rowPins2[ROWS] = { P2R1, P2R2, P2R3, P2R4 }; // Pins connected to R1, R2, R3, R4
 
-//RTC init
-RTC_DS1307 rtc;
-
-//DHT init
-dht DHT;
 
 //constants
 byte DivisionSymb[] = {
@@ -101,6 +96,7 @@ byte MultiplySymb[] = {
 
 String DefaultPassword = "EEE20003";
 String ActualPassword = "";
+String initialText = "Group 8 Calculator";
 //Arrays
 
 char rawInput[20]; //Keeps raw input as is for display
@@ -132,6 +128,8 @@ bool errorShown = false;
 LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 Keypad keypad1 = Keypad(makeKeymap(keys1), rowPins1, colPins1, ROWS, COLS);
 Keypad keypad2 = Keypad(makeKeymap(keys2), rowPins2, colPins2, ROWS, COLS);
+RTC_DS1307 rtc;
+dht DHT;
 
 void setup() {
   // Initalise Env
@@ -188,8 +186,9 @@ void initEnv(){
 String readSerial(){
   while (Serial.available() == 0){}
   while (Serial.available() > 0 ){
-    Serial.flush();
+   Serial.flush();
    String Output = Serial.readString();
+   Output.flush();
   }
   return Output;
 }
@@ -220,6 +219,18 @@ void wipememory(){
 }
 
 void changeInitText() {
+  Serial.println("Please enter the new text, it must be 20 characters or less.");
+  String input = readSerial();
+  if (input.length <= 20) {
+    initialText = input;
+    return;
+  }
+  else {
+    Serial.println("Text was too long, it was not saved!");
+  }
+}
+
+void disLDR() {
 
 }
 
@@ -258,6 +269,12 @@ void loop() {
     break;
   }
 }
+
+int readLDR() {
+  int input = analogRead(ldr);
+  int mappedInput = map(input, 8, 1015, 255, 0);
+  return mappedInput;
+}
   
 
 void(* resetFunc) (void) = 0;
@@ -275,6 +292,7 @@ float calculate(String inputArray[20]) {
       float value = calculate(tempArray);
       closeIndex = bracketFinder(i);
       reformArray(inputArray, i, closeIndex, value);
+      i--;
     }
   }
   for(int i = 0; i < 20; i++) { //Root
@@ -294,6 +312,7 @@ float calculate(String inputArray[20]) {
         return 0;
       }
       reformArray(inputArray, i, i + 1, firstNum / secondNum);
+      i--;
     }
   }
   for(int i = 0; i < 20; i++) {
