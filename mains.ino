@@ -3,7 +3,7 @@
 #include <Wire.h>
 #include <Keypad.h>
 #include <math.h>
-#include <EEEPROM.h>
+#include <EEPROM.h>
 #include <RTClib.h>
 #include <dht.h>
 
@@ -18,6 +18,7 @@
 #define P1R2 23
 #define P1R3 24
 #define P1R4 25
+
 #define P1C1 26
 #define P1C2 27
 #define P1C3 28
@@ -143,7 +144,7 @@ void setup() {
     if (password == ActualPassword){
       passwordCorrect = true;
     } else {
-      Serial.print("Incorrect")
+      Serial.print("Incorrect");
     }
   }
 
@@ -155,7 +156,7 @@ void setup() {
     Serial.println("1: Change default LCD text.");
     Serial.println("2: Display LDR sensor data.");
     Serial.println("3: Enter the calculator");
-    while (Serial.avaliable == 0) {}
+    while (Serial.available() == 0) {}
     Serial.flush();
     char input = Serial.read();
     switch (input) {
@@ -184,28 +185,31 @@ void initEnv(){
 }
 
 String readSerial(){
+  String Output;
   while (Serial.available() == 0){}
   while (Serial.available() > 0 ){
    Serial.flush();
-   String Output = Serial.readString();
-   Output.flush();
+   Output = Serial.readString();
+   Serial.flush();
   }
   return Output;
 }
 
 void interruptsetup(){
-  for (int i = 22; i <=25; i++){
-    attachInterrupt(digitalPinToInterrupt(i), keypads(), RISING)
-  }
-  for (int j = 32; j<=35; j++){
-    attachInterrupt(digitalPinToInterrupt(j), keypads(), RISING)
-  }
+  attachInterrupt(digitalPinToInterrupt(22), keypads(), RISING);
+  attachInterrupt(digitalPinToInterrupt(23), keypads(), RISING);
+  attachInterrupt(digitalPinToInterrupt(24), keypads(), RISING);
+  attachInterrupt(digitalPinToInterrupt(25), keypads(), RISING);
+  attachInterrupt(digitalPinToInterrupt(32), keypads(), RISING);
+  attachInterrupt(digitalPinToInterrupt(33), keypads(), RISING);
+  attachInterrupt(digitalPinToInterrupt(34), keypads(), RISING);
+  attachInterrupt(digitalPinToInterrupt(35), keypads(), RISING);
 }
 
 void passwordcheck(){
   int passwordresetval = EEPROM.read(PasswordAddress + PasswordSpace);//Read last val of password
   if (passwordresetval == 255){
-    writeEEPROM(PasswordAddress, PasswordSpace - 1, DefaultPassword)
+    writeEEPROM(PasswordAddress, PasswordSpace - 1, DefaultPassword);
   } 
   ActualPassword = readEEPROM(PasswordAddress, PasswordSpace - 1);
 }
@@ -216,15 +220,18 @@ void checkformemory(){
   } 
 }
 void wipememory(){
-  char zeroed = ' ';
+  String zeroed;
+  for (int i = 0; i <20; i++){
+    char space = ' ';
+    zeroed + space;
+  }
   writeEEPROM(MemoryAddress, MemorySpace - 1, zeroed);
 }
 
 void changeInitText() {
-<<<<<<< Updated upstream
   Serial.println("Please enter the new text, it must be 20 characters or less.");
   String input = readSerial();
-  if (input.length <= 20) {
+  if (input.length() <= 20) {
     initialText = input;
     return;
   }
@@ -235,10 +242,6 @@ void changeInitText() {
 
 void disLDR() {
 
-=======
-  Serial.print("Enter Text to change welcome message (20 letters):");
-  initalText = readSerial();
->>>>>>> Stashed changes
 }
 
 void loop() {
@@ -291,13 +294,13 @@ float calculate(String inputArray[20]) {
   float secondNum;
   for(int i = 0; i < 20; i++) { //Bracket
     if (inputArray[i] == "(") {
-      int closeIndex = bracketFinder(i);
+      int closeIndex = bracketFinder(i, inputArray);
       String tempArray[20];
       for (int j = i + 1; j < closeIndex; j++) {
         tempArray[j - i + 1] = tempArray[j];
       }
       float value = calculate(tempArray);
-      closeIndex = bracketFinder(i);
+      closeIndex = bracketFinder(i, inputArray);
       reformArray(inputArray, i, closeIndex, value);
       i--;
     }
@@ -308,7 +311,7 @@ float calculate(String inputArray[20]) {
       if (error = true) {
         return 0;
       }
-      reformArray(inputArray, i, i + 1; sqrt(firstNum));
+      reformArray(inputArray, i, i + 1, sqrt(firstNum));
     }
   }
   for(int i = 0; i < 20; i++) { //Division
@@ -378,10 +381,10 @@ float floatMaker(String input) {
         Serial.println("error set true, invalid char");
         return 0;
       }
-      else if (input.charAt(j) == '.' {
+      else if (input.charAt(j) == '.') {
         if (dec) {
           error = true;
-          Serial.println("error - too many decimals")
+          Serial.println("error - too many decimals");
           return 0;
         }
         dec = true;
@@ -391,7 +394,7 @@ float floatMaker(String input) {
   return input.toFloat(); //Turns input string into float and returns 
 }
 
-int bracketFinder(int startBacket) { //Find the indexes of the close of a bracket
+int bracketFinder(int startBacket, String inputArray[20]) { //Find the indexes of the close of a bracket
   int openBrackets = 1;
   for (int i = startBacket; i < 20; i++) {  
     if (inputArray[i] == "(") {
@@ -438,10 +441,10 @@ void reformArray(String *inArray, int startIndex, int closeIndex, float newValue
     newArray[i] = inArray[i];
   }
   newArray[startIndex - 1] = newValue;
-  for (int i = startIndex; i < (20 - (closeIndex - startIndex); i++) { //Moves everything down to fill out the new array.
+  for (int i = startIndex; i < (20 - (closeIndex - startIndex)); i++) { //Moves everything down to fill out the new array.
     newArray[i] = inArray[i + (closeIndex - startIndex)];
   }
-  for (int i = 20 - (closeIndex - startIndex); i < 20; i++ {
+  for (int i = 20 - (closeIndex - startIndex); i < 20; i++) {
     newArray[i] = ""; //Prevents random data from getting put into the new array
   }
   for (int i = 0; i < 20; i++) { //Copies the temporary array to the orginal.
@@ -501,7 +504,7 @@ void displayTemp() {
 void displayTime() {
   DateTime now = rtc.now();
   char time[20];
-  sprintf(time, "%02d:%02d:%02d", now.hour(), now.minute(), now.second())
+  sprintf(time, "%02d:%02d:%02d", now.hour(), now.minute(), now.second());
   lcd.setCursor(1, 6);
   lcd.println(time);
 }
@@ -575,8 +578,8 @@ void subFromArrays(){
 }
 
 String readEEPROM(int startadd,int stopadd){
-  string Output = "";
-  for (i = startadd; i <= stopadd; i++){
+  String Output = "";
+  for (int i = startadd; i <= stopadd; i++){
     char temp = EEPROM.read(i);
     Output + temp;
   }
@@ -585,7 +588,7 @@ String readEEPROM(int startadd,int stopadd){
 
 void writeEEPROM(int startadd,int stopadd, String msg){
   int j = 0;
-  for (i = startadd; i <= stopadd; i++){
+  for (int i = startadd; i <= stopadd; i++){
     if (j < msg.length()){
       char temp = msg.charAt(j);
       EEPROM.write(i,temp);
@@ -688,13 +691,13 @@ void choosefunckey (char key){
     case '_':
       switch (mode){
         case '0':
-          case = '1';
+          
         break;
         case '1':
-          case = '2';
+          
         break;
         case '2':
-          case = '0';
+          
         break;
       }
     break;
