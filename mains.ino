@@ -209,16 +209,19 @@ void passwordcheck(){
   } 
   ActualPassword = readEEPROM(PasswordAddress, PasswordSpace - 1);
 }
-
-void wipememory(){
-  int zeroed
+void checkformemory(){
   int memoryresetval = EEPROM.read(MemoryAddress + MemorySpace);//Read last val of memory
   if (memoryresetval == 255){
-    writeEEPROM(MemoryAddress, MemorySpace - 1, );
+    wipememory();
   } 
+}
+void wipememory(){
+  char zeroed = ' ';
+  writeEEPROM(MemoryAddress, MemorySpace - 1, zeroed);
 }
 
 void changeInitText() {
+<<<<<<< Updated upstream
   Serial.println("Please enter the new text, it must be 20 characters or less.");
   String input = readSerial();
   if (input.length <= 20) {
@@ -232,6 +235,10 @@ void changeInitText() {
 
 void disLDR() {
 
+=======
+  Serial.print("Enter Text to change welcome message (20 letters):");
+  initalText = readSerial();
+>>>>>>> Stashed changes
 }
 
 void loop() {
@@ -670,6 +677,7 @@ void choosefunckey (char key){
     break;
     case 'X' :
       //Memory Recall
+       
     break;
     case 'V' :
       //Memory Add
