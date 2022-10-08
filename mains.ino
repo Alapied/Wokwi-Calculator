@@ -195,15 +195,13 @@ String readSerial(){
   return Output;
 }
 
-void interruptsetup(){
-  attachInterrupt(digitalPinToInterrupt(22), keypads(), RISING);
-  attachInterrupt(digitalPinToInterrupt(23), keypads(), RISING);
-  attachInterrupt(digitalPinToInterrupt(24), keypads(), RISING);
-  attachInterrupt(digitalPinToInterrupt(25), keypads(), RISING);
-  attachInterrupt(digitalPinToInterrupt(32), keypads(), RISING);
-  attachInterrupt(digitalPinToInterrupt(33), keypads(), RISING);
-  attachInterrupt(digitalPinToInterrupt(34), keypads(), RISING);
-  attachInterrupt(digitalPinToInterrupt(35), keypads(), RISING);
+void interruptsetup(){  
+  for (int i = 22; i<=25; i++){
+    attachInterrupt(digitalPinToInterrupt(i), keypads, RISING);
+  }
+  for (int i = 32; i<=35; i++){
+    attachInterrupt(digitalPinToInterrupt(i), keypads, RISING);
+  }
 }
 
 void passwordcheck(){
