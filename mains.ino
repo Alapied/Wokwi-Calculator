@@ -95,10 +95,10 @@ byte MultiplySymb[] = {
   B00000
 };
 
-
+String DefaultPassword = "EEE20003";
 String ActualPassword = "";
 String defaultText = "Group 8 Calculator";
-String initalText = "";
+String initialText = "";
 //Arrays
 
 char rawInput[20]; //Keeps raw input as is for display
@@ -155,6 +155,8 @@ void setup() {
       Serial.println("Incorrect");
     }
   }
+  lcd.setCursor(0,0);
+  lcd.println(initialText);
 
   //Menu
   bool menu = true;
@@ -203,8 +205,7 @@ String readSerial(){
   while (Serial.available() > 0 ){
    Serial.flush();
    Output = Serial.readString();
-   Serial.println(Output);
-   Serial.flush();
+   Output.replace(" ", "");
   }
   return Output;
 }
@@ -225,7 +226,6 @@ void passwordcheck(){
     writeEEPROM(PasswordAddress, PasswordSpace - 1, DefaultPassword);
   } 
   ActualPassword = readEEPROM(PasswordAddress, PasswordSpace - 1);
-  ActualPassword.replace(" ", "");
   Serial.println(ActualPassword);
 }
 void checkformemory(){
@@ -610,7 +610,7 @@ void subFromArrays(){
 }
 
 String readEEPROM(int startadd,int stopadd){
-  String Output = "";
+  String Output ;
   for (int i = startadd; i <= stopadd; i++){
     char temp = EEPROM.read(i);
     Output + temp;
