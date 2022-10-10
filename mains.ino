@@ -113,6 +113,9 @@ int cursorx = 0;
 int cursory = 0;
 char mode = '0'; //0 is calc, 1 is temp/humidity, 2 is time.
 
+float lastnumber;
+String tempLastnumber = "";
+
 //EEPROM
 int Memory; 
 int Memorysize = 0;
@@ -226,9 +229,10 @@ void checkformemory(){
   } 
 }
 void wipememory(){
-  Memory = "";
+  Memory = 0;
   Memorysize = 0;
-  writeEEPROM(MemoryAddress, MemorySpace - 1, Memory);
+  String strmem = String(Memory);
+  writeEEPROM(MemoryAddress, MemorySpace - 1, strmem);
 }
 
 void changeInitText() {
@@ -511,7 +515,16 @@ void displayTime() {
   lcd.setCursor(1, 6);
   lcd.println(time);
 }
-
+void lastdig(char key){
+  //if not digit or decimal
+  //set last number
+  if(isDigit(key) || key == '.') { //Digit or decimal place
+      tempLastnumber + key;
+  } else {
+    lastnumber = floatMaker(tempLastnumber);
+    tempLastnumber = "";
+  }
+}
 //Input keypresses
 void addtoarrays(char keys){
   if (calc = true) {
@@ -522,6 +535,7 @@ void addtoarrays(char keys){
 
   if (masterptr < 20){
     rawInput[masterptr] = keys;
+    lastdig(keys);
     if(isDigit(keys) || keys == '.') { //Digit or decimal place
       inNum[inNumPos] = keys;
       inNumPos++;
@@ -603,23 +617,23 @@ void writeEEPROM(int startadd,int stopadd, String msg){
 }
 void dellastinput(){
   //take master pointer and retard by 1, delete from all arrays
-  subFromarrays();
+  subFromArrays();
 }
 
 void memrecall(){
   //recall memory from eeprom and input into function
   String memstring = String(Memory);
-  for (i=0; i<memstring.length(); i++){
-    key = memstring.charAt(i)
+  for (int i=0; i<memstring.length(); i++){
+    char key = memstring.charAt(i);
     addtoarrays(key);
   }
 }
 
-void memadd(float lastnumber){
+void memadd(){
 // add last number into memory or whats currently in memory
   Memory + lastnumber;
 }
-void memsubtract(float lastnumber){
+void memsubtract(){
   Memory - lastnumber;
 }
 
