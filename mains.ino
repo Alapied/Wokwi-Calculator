@@ -96,8 +96,9 @@ byte MultiplySymb[] = {
 };
 
 String DefaultPassword = "EEE20003";
-String ActualPassword = "";
+String ActualPassword;
 String initialText = "Group 8 Calculator";
+
 //Arrays
 
 char rawInput[20]; //Keeps raw input as is for display
@@ -113,6 +114,8 @@ int cursory = 0;
 char mode = '0'; //0 is calc, 1 is temp/humidity, 2 is time.
 
 //EEPROM
+int Memory; 
+int Memorysize = 0;
 int MemoryAddress = 21;
 int MemorySpace = 21; // last digit is the reset bool
 int PasswordAddress = 0;
@@ -144,7 +147,7 @@ void setup() {
     if (password == ActualPassword){
       passwordCorrect = true;
     } else {
-      Serial.print("Incorrect");
+      Serial.println("Incorrect");
     }
   }
 
@@ -179,6 +182,7 @@ void initEnv(){
   Serial.begin(9600);
   lcd.init();                     
   lcd.backlight();
+  pinMode(A0, INPUT); //LDR
   interruptsetup();
   passwordcheck();
   wipememory();
@@ -190,6 +194,7 @@ String readSerial(){
   while (Serial.available() > 0 ){
    Serial.flush();
    Output = Serial.readString();
+   Serial.println(Output);
    Serial.flush();
   }
   return Output;
@@ -206,10 +211,13 @@ void interruptsetup(){
 
 void passwordcheck(){
   int passwordresetval = EEPROM.read(PasswordAddress + PasswordSpace);//Read last val of password
+  Serial.println(passwordresetval);
   if (passwordresetval == 255){
     writeEEPROM(PasswordAddress, PasswordSpace - 1, DefaultPassword);
   } 
   ActualPassword = readEEPROM(PasswordAddress, PasswordSpace - 1);
+  ActualPassword.replace(" ", "");
+  Serial.println(ActualPassword);
 }
 void checkformemory(){
   int memoryresetval = EEPROM.read(MemoryAddress + MemorySpace);//Read last val of memory
@@ -218,12 +226,9 @@ void checkformemory(){
   } 
 }
 void wipememory(){
-  String zeroed;
-  for (int i = 0; i <20; i++){
-    char space = ' ';
-    zeroed + space;
-  }
-  writeEEPROM(MemoryAddress, MemorySpace - 1, zeroed);
+  Memory = "";
+  Memorysize = 0;
+  writeEEPROM(MemoryAddress, MemorySpace - 1, Memory);
 }
 
 void changeInitText() {
@@ -239,7 +244,7 @@ void changeInitText() {
 }
 
 void disLDR() {
-
+  int light_intensity = readLDR();
 }
 
 void loop() {
@@ -589,10 +594,35 @@ void writeEEPROM(int startadd,int stopadd, String msg){
   for (int i = startadd; i <= stopadd; i++){
     if (j < msg.length()){
       char temp = msg.charAt(j);
+      Serial.println(temp);
       EEPROM.write(i,temp);
+      
     }
+    j++;
   }
 }
+void dellastinput(){
+  //take master pointer and retard by 1, delete from all arrays
+  subFromarrays();
+}
+
+void memrecall(){
+  //recall memory from eeprom and input into function
+  String memstring = String(Memory);
+  for (i=0; i<memstring.length(); i++){
+    key = memstring.charAt(i)
+    addtoarrays(key);
+  }
+}
+
+void memadd(float lastnumber){
+// add last number into memory or whats currently in memory
+  Memory + lastnumber;
+}
+void memsubtract(float lastnumber){
+  Memory - lastnumber;
+}
+
 
 void keypads(){
   char key1 = keypad1.getKey();
@@ -665,9 +695,21 @@ void choosefunckey (char key){
       lcd.clear();
       on = false;
     break;
+     case '(':
+      addtoarrays(key);
+    break;
+     case ')':
+      addtoarrays(key);
+    break;
+    case 'R':
+      addtoarrays(key);
+    break;
+    case '%':
+      addtoarrays(key);
+    break;
     case 'C' :
       //Clear Last digit
-      
+      dellastinput();
     break;
     case 'E' :
       //Clear Everything
@@ -675,16 +717,19 @@ void choosefunckey (char key){
     break;
     case 'Z' :
       //Memory Clear
+      wipememory();
     break;
     case 'X' :
       //Memory Recall
-       
+      memrecall();
     break;
     case 'V' :
       //Memory Add
+      memadd();
     break;
     case 'B' :
       //Memory Subtract
+      memsubtract();
     break;
     case '_':
       switch (mode){
