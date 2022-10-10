@@ -95,10 +95,10 @@ byte MultiplySymb[] = {
   B00000
 };
 
-String DefaultPassword = "EEE20003";
-String ActualPassword;
-String initialText = "Group 8 Calculator";
 
+String ActualPassword = "";
+String defaultText = "Group 8 Calculator";
+String initalText = "";
 //Arrays
 
 char rawInput[20]; //Keeps raw input as is for display
@@ -123,6 +123,8 @@ int MemoryAddress = 21;
 int MemorySpace = 21; // last digit is the reset bool
 int PasswordAddress = 0;
 int PasswordSpace = 21;
+int initTextAddress = 44;
+int initTextSpace = 21;
 
 //Global Bools
 bool displayupdated = false;
@@ -175,6 +177,9 @@ void setup() {
       case '3':
         menu = false;
       break;
+      default:
+        Serial.println("Impropper selection!");
+      break;
     }
   }
 
@@ -189,6 +194,7 @@ void initEnv(){
   interruptsetup();
   passwordcheck();
   wipememory();
+  initalTextCheck();
 }
 
 String readSerial(){
@@ -235,11 +241,20 @@ void wipememory(){
   writeEEPROM(MemoryAddress, MemorySpace - 1, strmem);
 }
 
+void initalTextCheck() {
+  int initialTextResetVal = EEPROM.read(initTextAddress + initTextSpace);
+  if (initialTextResetVal == 255) {
+    writeEEPROM(initTextAddress, initTextSpace - 1, defaultText);
+  }
+  initialText = readEEPROM(initTextAddress, initTextSpace - 1);
+}
+
 void changeInitText() {
   Serial.println("Please enter the new text, it must be 20 characters or less.");
   String input = readSerial();
   if (input.length() <= 20) {
     initialText = input;
+    writeEEPROM(initTextAddress, initTextSpace - 1, initialText);
     return;
   }
   else {
