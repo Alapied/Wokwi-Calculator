@@ -119,7 +119,7 @@ String tempLastnumber = "";
 //EEPROM
 int Memory; 
 int Memorysize = 0;
-int MemoryAddress = 21;
+int MemoryAddress = 22;
 int MemorySpace = 21; // last digit is the reset bool
 int PasswordAddress = 0;
 int PasswordSpace = 21;
@@ -149,6 +149,7 @@ void setup() {
     Serial.println("Enter Password: ");
     //Enter password  
     String password = readSerial();
+    Serial.println(password);
     if (password == ActualPassword){
       passwordCorrect = true;
     } else {
@@ -156,18 +157,17 @@ void setup() {
     }
   }
   lcd.setCursor(0,0);
-  lcd.println(initialText);
+  //lcd.println(initialText);
 
   //Menu
   bool menu = true;
-  while (menu) {
     Serial.println("Welcome!");
     Serial.println("Please select and option.");
     Serial.println("1: Change default LCD text.");
     Serial.println("2: Display LDR sensor data.");
     Serial.println("3: Enter the calculator");
-    while (Serial.available() == 0) {}
-    Serial.flush();
+  while (menu) {
+    lcd.print(initialText);
     char input = Serial.read();
     switch (input) {
       case '1':
@@ -178,9 +178,6 @@ void setup() {
       break;
       case '3':
         menu = false;
-      break;
-      default:
-        Serial.println("Impropper selection!");
       break;
     }
   }
@@ -196,7 +193,7 @@ void initEnv(){
   interruptsetup();
   passwordcheck();
   wipememory();
-  initalTextCheck();
+  initialTextCheck();
 }
 
 String readSerial(){
@@ -206,6 +203,7 @@ String readSerial(){
    Serial.flush();
    Output = Serial.readString();
    Output.replace(" ", "");
+   Output.replace("\n", "");
   }
   return Output;
 }
@@ -223,10 +221,10 @@ void passwordcheck(){
   int passwordresetval = EEPROM.read(PasswordAddress + PasswordSpace);//Read last val of password
   Serial.println(passwordresetval);
   if (passwordresetval == 255){
-    writeEEPROM(PasswordAddress, PasswordSpace - 1, DefaultPassword);
+    writeEEPROM(PasswordAddress, PasswordAddress + PasswordSpace - 1, DefaultPassword);
   } 
-  ActualPassword = readEEPROM(PasswordAddress, PasswordSpace - 1);
-  Serial.println(ActualPassword);
+  ActualPassword = readEEPROM(PasswordAddress,PasswordAddress + PasswordSpace - 1);
+  ActualPassword.replace(" ", "");
 }
 void checkformemory(){
   int memoryresetval = EEPROM.read(MemoryAddress + MemorySpace);//Read last val of memory
@@ -238,15 +236,17 @@ void wipememory(){
   Memory = 0;
   Memorysize = 0;
   String strmem = String(Memory);
-  writeEEPROM(MemoryAddress, MemorySpace - 1, strmem);
+  writeEEPROM(MemoryAddress, MemoryAddress + MemorySpace - 1, strmem);
 }
 
-void initalTextCheck() {
+void initialTextCheck() {
   int initialTextResetVal = EEPROM.read(initTextAddress + initTextSpace);
+  Serial.println(initialTextResetVal);
   if (initialTextResetVal == 255) {
-    writeEEPROM(initTextAddress, initTextSpace - 1, defaultText);
+    writeEEPROM(initTextAddress, initTextAddress + initTextSpace - 1, defaultText);
   }
-  initialText = readEEPROM(initTextAddress, initTextSpace - 1);
+  initialText = readEEPROM(initTextAddress, initTextAddress + initTextSpace - 1);
+  Serial.println(initialText);
 }
 
 void changeInitText() {
@@ -254,7 +254,7 @@ void changeInitText() {
   String input = readSerial();
   if (input.length() <= 20) {
     initialText = input;
-    writeEEPROM(initTextAddress, initTextSpace - 1, initialText);
+     writeEEPROM(initTextAddress, initTextAddress + initTextSpace - 1, initialText);
     return;
   }
   else {
@@ -610,22 +610,26 @@ void subFromArrays(){
 }
 
 String readEEPROM(int startadd,int stopadd){
-  String Output ;
+  String Output;
   for (int i = startadd; i <= stopadd; i++){
     char temp = EEPROM.read(i);
-    Output + temp;
+    Output = Output + temp;
   }
   return Output;
 }
 
 void writeEEPROM(int startadd,int stopadd, String msg){
   int j = 0;
+  char space = ' ';
   for (int i = startadd; i <= stopadd; i++){
     if (j < msg.length()){
       char temp = msg.charAt(j);
+      Serial.print(i);
       Serial.println(temp);
       EEPROM.write(i,temp);
       
+    } else {
+      EEPROM.write(i,space);
     }
     j++;
   }
