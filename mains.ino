@@ -124,6 +124,8 @@ int PasswordAddress = 0;
 int PasswordSpace = 21;
 int initTextAddress = 44;
 int initTextSpace = 21;
+int ldrAddress = 66;
+int ldrSpace = 21;
 
 //Global Bools
 bool displayupdated = false;
@@ -148,6 +150,7 @@ void setup() {
     Serial.println("Enter Password: ");
     //Enter password  
     String password = readSerial();
+    password.replace(" ", "");
     Serial.println(password);
     if (password == ActualPassword){
       passwordCorrect = true;
@@ -160,15 +163,13 @@ void setup() {
 
   //Menu
   bool menu = true;
-    Serial.println("Welcome!");
-    Serial.println("Please select and option.");
-    Serial.println("1: Change default LCD text.");
-    Serial.println("2: Display LDR sensor data.");
-    Serial.println("3: Enter the calculator");
+  Serial.println("Welcome!");
+  disMenuText();
   while (menu) {
+    lcd.setCursor(0,0);
     lcd.print(initialText);
-    char input = Serial.read();
-    switch (input) {
+    String input = readSerial();
+    switch (input.charAt(0)) {
       case '1':
         changeInitText();
       break;
@@ -177,11 +178,19 @@ void setup() {
       break;
       case '3':
         menu = false;
+        lcd.clear();
       break;
     }
   }
 
 
+}
+
+void disMenuText() {
+  Serial.println("Please select an option.");
+  Serial.println("1: Change default LCD text.");
+  Serial.println("2: Display LDR sensor data.");
+  Serial.println("3: Enter the calculator");
 }
 
 void initEnv(){
@@ -198,15 +207,14 @@ void initEnv(){
 String readSerial(){
   Serial.flush();
   String Output;
-  while (Serial.available() == 0){}
-  while (Serial.available() > 0 ){
-   
-   Output = Serial.readString();
-   Output.replace(" ", "");
-   Output.replace("\n", "");
-   Serial.flush();
+  delay(20);
+  while (Serial.available() == 0){} 
+  while (Serial.available() > 0) {
+    Output = Serial.readString();
+    Output.replace("\n", "");
+    Serial.flush();
+    return Output;
   }
-  return Output;
 }
 
 void interruptsetup(){  
@@ -271,6 +279,8 @@ void changeInitText() {
         initialText = input;
         writeEEPROM(initTextAddress, initTextAddress + initTextSpace - 1, initialText);
         Serial.println("Saved to EEPROM");
+        disMenuText();
+        lcd.clear();
         return;
       }
       else {
@@ -278,6 +288,8 @@ void changeInitText() {
       }
 
     } if (yn == "no"){
+      disMenuText();
+      lcd.clear();
       return;
     }
     
@@ -285,7 +297,22 @@ void changeInitText() {
 }  
 
 void disLDR() {
-  int light_intensity = readLDR();
+  
+  if(EEPROM.read(ldrAddress) == 255) {
+    int light_intensity = readLDR();
+    EEPROM.write(ldrAddress, 1);
+    writeEEPROM(ldrAddress + 1, ldrAddress + ldrSpace, String(light_intensity));
+    Serial.print("Current LDR value of ");
+    Serial.print(light_intensity);
+    Serial.println(" saved to the EEPROM.");
+  }
+
+  String ldrValue = readEEPROM(ldrAddress + 1, ldrAddress + ldrSpace);
+  Serial.print(ldrValue);
+  Serial.println(" was read from the EEPROM!");
+  Serial.print("Current value is ");
+  Serial.println(readLDR());
+  disMenuText();
 }
 
 void loop() {
@@ -637,6 +664,7 @@ String readEEPROM(int startadd,int stopadd){
     char temp = EEPROM.read(i);
     Output = Output + temp;
   }
+  Output.trim();
   return Output;
 }
 
@@ -646,8 +674,8 @@ void writeEEPROM(int startadd,int stopadd, String msg){
   for (int i = startadd; i <= stopadd; i++){
     if (j < msg.length()){
       char temp = msg.charAt(j);
-      Serial.print(i);
-      Serial.println(temp);
+      //Serial.print(i);
+      //Serial.println(temp);
       EEPROM.write(i,temp);
       
     } else {
@@ -791,13 +819,13 @@ void choosefunckey (char key){
     case '_':
       switch (mode){
         case '0':
-          
+          mode = '1';
         break;
         case '1':
-          
+          mode = '2';
         break;
         case '2':
-          
+          mode = '0';
         break;
       }
     break;
