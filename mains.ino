@@ -117,8 +117,7 @@ float lastnumber;
 String tempLastnumber = "";
 
 //EEPROM
-int Memory; 
-int Memorysize = 0;
+float Memory; 
 int MemoryAddress = 22;
 int MemorySpace = 21; // last digit is the reset bool
 int PasswordAddress = 0;
@@ -197,13 +196,15 @@ void initEnv(){
 }
 
 String readSerial(){
+  Serial.flush();
   String Output;
   while (Serial.available() == 0){}
   while (Serial.available() > 0 ){
-   Serial.flush();
+   
    Output = Serial.readString();
    Output.replace(" ", "");
    Output.replace("\n", "");
+   Serial.flush();
   }
   return Output;
 }
@@ -230,15 +231,22 @@ void checkformemory(){
   int memoryresetval = EEPROM.read(MemoryAddress + MemorySpace);//Read last val of memory
   if (memoryresetval == 255){
     wipememory();
-  } 
+  } else {
+    String tempMemory = readEEPROM(MemoryAddress, MemoryAddress + MemorySpace - 1);
+    Memory = floatMaker(tempMemory);
+    EEPROM.write(MemoryAddress+MemorySpace, 0);
+  }
 }
 void wipememory(){
   Memory = 0;
-  Memorysize = 0;
   String strmem = String(Memory);
   writeEEPROM(MemoryAddress, MemoryAddress + MemorySpace - 1, strmem);
 }
-
+void MemSaveEEPROM(){
+  String strmem = String(Memory);
+  writeEEPROM(MemoryAddress, MemoryAddress + MemorySpace - 1, strmem);
+  EEPROM.write(MemoryAddress+MemorySpace, 0);
+}
 void initialTextCheck() {
   int initialTextResetVal = EEPROM.read(initTextAddress + initTextSpace);
   Serial.println(initialTextResetVal);
@@ -250,17 +258,31 @@ void initialTextCheck() {
 }
 
 void changeInitText() {
+  bool set = true;
   Serial.println("Please enter the new text, it must be 20 characters or less.");
   String input = readSerial();
-  if (input.length() <= 20) {
-    initialText = input;
-     writeEEPROM(initTextAddress, initTextAddress + initTextSpace - 1, initialText);
-    return;
+  Serial.println(input);
+  Serial.println("Do you want to Save this Text? [yes/no]");
+  
+  while (set){
+    String yn = readSerial();
+    if (yn == "yes"){
+      if (input.length() <= 20) {
+        initialText = input;
+        writeEEPROM(initTextAddress, initTextAddress + initTextSpace - 1, initialText);
+        Serial.println("Saved to EEPROM");
+        return;
+      }
+      else {
+        Serial.println("Text was too long, it was not saved!");
+      }
+
+    } if (yn == "no"){
+      return;
+    }
+    
   }
-  else {
-    Serial.println("Text was too long, it was not saved!");
-  }
-}
+}  
 
 void disLDR() {
   int light_intensity = readLDR();
@@ -650,10 +672,12 @@ void memrecall(){
 
 void memadd(){
 // add last number into memory or whats currently in memory
-  Memory + lastnumber;
+  Memory = Memory + lastnumber;
+  MemSaveEEPROM();
 }
 void memsubtract(){
-  Memory - lastnumber;
+ Memory = Memory - lastnumber;
+  MemSaveEEPROM();
 }
 
 
