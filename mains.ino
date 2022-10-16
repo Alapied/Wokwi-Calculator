@@ -1,5 +1,5 @@
 //Import Libraries
-#include <LiquidCrystal_I2C.h>
+#include <LiquidCrystal.h>
 #include <Wire.h>
 #include <Keypad.h>
 #include <math.h>
@@ -135,7 +135,14 @@ bool error = false;
 bool errorShown = false;
 
 //Device Int
-LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+#define RS 13
+#define EE 12
+#define D4 11
+#define D5 10
+#define D6 9 
+#define D7 8
+#define BACKLIGHTPIN 6
+LiquidCrystal lcd(RS, EE, D4, D5, D6, D7);
 Keypad keypad1 = Keypad(makeKeymap(keys1), rowPins1, colPins1, ROWS, COLS);
 Keypad keypad2 = Keypad(makeKeymap(keys2), rowPins2, colPins2, ROWS, COLS);
 RTC_DS1307 rtc;
@@ -195,8 +202,9 @@ void disMenuText() {
 
 void initEnv(){
   Serial.begin(9600);
-  lcd.init();                     
-  lcd.backlight();
+  lcd.begin(20,4);                     
+  pinmode(BACKLIGHTPIN, OUTPUT);
+  adjustbacklight(255);
   pinMode(A0, INPUT); //LDR
   interruptsetup();
   passwordcheck();
@@ -215,6 +223,10 @@ String readSerial(){
     Serial.flush();
     return Output;
   }
+}
+
+void adjustbacklight(int lux){
+  analogWrite(BACKLIGHTPIN, lux);
 }
 
 void interruptsetup(){  
@@ -776,7 +788,7 @@ void choosefunckey (char key){
       on = true;
     break;
     case 'F' :
-      lcd.noBacklight();
+      adjustbacklight(0);
       lcd.clear();
       on = false;
     break;
