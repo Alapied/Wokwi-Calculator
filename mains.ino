@@ -237,6 +237,7 @@ void disMenuText() {
 void initEnv() {
   Serial.begin(9600);
   lcd.begin(20, 4);
+  reset();
   pinMode(BACKLIGHTPIN, OUTPUT);
   adjustbacklight(255);
   pinMode(A0, INPUT); //LDR
@@ -414,6 +415,9 @@ float calculate(String *inputArray) {
       for (int j = i; j < closeIndex - 1; j++) {
         tempArray[j - i] = inputArray[j + 1];
       }
+      if (error == true) {
+        return 0;
+      }
       float value = calculate(tempArray);
       closeIndex = bracketFinder(i, inputArray);
       reformArray(inputArray, i, closeIndex, value);
@@ -423,7 +427,7 @@ float calculate(String *inputArray) {
   for (int i = 0; i < 20; i++) { //Root
     if (inputArray[i] == "R") {
       firstNum = floatMaker(inputArray[i + 1]);
-      if (error = true) {
+      if (error == true) {
         return 0;
       }
       reformArray(inputArray, i, i + 1, sqrt(firstNum));
@@ -432,8 +436,12 @@ float calculate(String *inputArray) {
   for (int i = 0; i < 20; i++) { //Division
     if (inputArray[i] == "/") {
       firstNum = floatMaker(inputArray[i - 1]);
-      secondNum = floatMaker(inputArray[i - 1]);
-      if (error = true) {
+      secondNum = floatMaker(inputArray[i + 1]);
+      if (secondNum == 0) {
+        error = true;
+        Serial.println("Div by 0 error.");
+      }
+      if (error == true) {
         return 0;
       }
       reformArray(inputArray, i - 1, i + 1, firstNum / secondNum);
@@ -518,10 +526,21 @@ int bracketFinder(int startBacket, String *inputArray) { //Find the indexes of t
     }
     else if (inputArray[i] == ")") {
       openBrackets--;
+      if (openBrackets == 0) {
+        return i;
+      }
     }
-
-    if (openBrackets == 0) {
-      return i;
+    
+    if (i == 19) {
+      if (openBrackets > 0) {
+        error = true;
+        Serial.println("Not enough close brackets");
+      }
+    
+      if (openBrackets < 0) {
+        error = true;
+        Serial.println("Too many brackets");
+      }
     }
   }
 }
@@ -529,6 +548,7 @@ int bracketFinder(int startBacket, String *inputArray) { //Find the indexes of t
 void reset() {
   resetarrays();
   resetCounters();
+  lcd.clear();
 }
 
 //array modules
@@ -548,6 +568,7 @@ void resetCounters() {
   inStringPos = 0;
   cursorx = 0;
   cursory = 0;
+  error = false;
 }
 
 
@@ -849,7 +870,12 @@ void choosefunckey (char key) {
       break;
     case 'C' :
       //Clear Last digit
-      dellastinput();
+      if (error) {
+        reset();
+      }
+      else {
+        dellastinput();
+      }
       break;
     case 'E' :
       //Clear Everything
