@@ -111,6 +111,7 @@ int inNumPos = 0;
 int inStringPos = 0;
 int cursorx = 0;
 int cursory = 0;
+int interruptCount = 1;
 char mode = '0'; //0 is calc, 1 is temp/humidity, 2 is time.
 
 float lastnumber;
@@ -185,12 +186,42 @@ void setup() {
       break;
       case '3':
         menu = false;
+        timerSetup();
         lcd.clear();
       break;
     }
   }
 
 
+}
+
+void timerSetup() {
+
+  //Creates 200ms timer (5Hz)
+  cli();
+
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCNT1 = 0;
+
+  OCR1A = 3124; // [16MHz/(1024 * 5Hz)] - 1
+
+  TCCR1B |= (1 << WGM12);
+
+  TCCR1B |= (1 << CS12) | (1 << CS10);
+
+  TIMSK1 |= (1 << OCIE1A);
+
+  sei();
+}
+
+ISR(TIMER1_COMPA_vect) {
+  Keypads(); //Checks keypad every 200ms
+  if (interruptCount == 5) { //Runs every second
+    adjustbacklight(readLDR());
+    interruptCount = 0;
+  }
+  interruptCount++;
 }
 
 void disMenuText() {
@@ -206,7 +237,6 @@ void initEnv(){
   pinmode(BACKLIGHTPIN, OUTPUT);
   adjustbacklight(255);
   pinMode(A0, INPUT); //LDR
-  interruptsetup();
   passwordcheck();
   wipememory();
   initialTextCheck();
@@ -227,15 +257,6 @@ String readSerial(){
 
 void adjustbacklight(int lux){
   analogWrite(BACKLIGHTPIN, lux);
-}
-
-void interruptsetup(){  
-  for (int i = 22; i<=25; i++){
-    attachInterrupt(digitalPinToInterrupt(i), keypads, RISING);
-  }
-  for (int i = 32; i<=35; i++){
-    attachInterrupt(digitalPinToInterrupt(i), keypads, RISING);
-  }
 }
 
 void passwordcheck(){
@@ -759,9 +780,11 @@ void choosefunckey (char key){
         inStringCopy[i] = inString[i];
       }
       float result;
+      noInterrupts();
       result = calculate(inStringCopy);
+      interrupts();
       lcd.setCursor(0,3);
-    lcd.println(result);
+      lcd.println(result);
       reset();
       break;
     case '+':
