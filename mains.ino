@@ -268,7 +268,6 @@ void adjustbacklight(int lux) {
 
 void passwordcheck() {
   int passwordresetval = EEPROM.read(PasswordAddress + PasswordSpace);//Read last val of password
-  Serial.println(passwordresetval);
   if (passwordresetval == 255) {
     writeEEPROM(PasswordAddress, PasswordAddress + PasswordSpace - 1, DefaultPassword);
   }
@@ -297,8 +296,8 @@ void MemSaveEEPROM() {
 }
 void initialTextCheck() {
   int initialTextResetVal = EEPROM.read(initTextAddress + initTextSpace);
-  Serial.println(initialTextResetVal);
   if (initialTextResetVal == 255) {
+    Serial.println("No value stored, loading in default for inital text.");
     writeEEPROM(initTextAddress, initTextAddress + initTextSpace - 1, defaultText);
   }
   initialText = readEEPROM(initTextAddress, initTextAddress + initTextSpace - 1);
@@ -415,11 +414,6 @@ float calculate(String *inputArray) {
       for (int j = i; j < closeIndex - 1; j++) {
         tempArray[j - i] = inputArray[j + 1];
       }
-      Serial.print("Calling calculate with: ");
-      for (int k = 0; k < 20; k++) {
-        Serial.print(tempArray[k]);
-      }
-      Serial.print("\n");
       float value = calculate(tempArray);
       closeIndex = bracketFinder(i, inputArray);
       reformArray(inputArray, i, closeIndex, value);
@@ -479,11 +473,6 @@ float calculate(String *inputArray) {
         return 0;
       }
       reformArray(inputArray, i - 1, i + 1, firstNum - secondNum);
-      //Serial.println("Array reform");
-      // for (int j = 0; j < 20; j++) {
-      //   Serial.print(inputArray[j]);
-      // }
-      // Serial.print("\n");
       i--;
     }
   }
@@ -684,11 +673,7 @@ void addtoarrays(char keys) {
 }
 
 void subFromArrays() {
-  Serial.println(masterptr);
-  Serial.println(inStringPos);
-  Serial.println(inNumPos);
-  Serial.println("---");
-
+ 
   if (calc = true) {
     lcd.clear();
     lcd.setCursor(cursorx, cursory);
@@ -717,8 +702,6 @@ void subFromArrays() {
           inNum[i] = currentNum.charAt(i);
         } 
         inNumPos = len - 1;
-        
-        Serial.print("\n");
       }
       else {
         inString[inStringPos] = "";
@@ -726,23 +709,6 @@ void subFromArrays() {
       displayupdated = false;
     }
   }
-
-  Serial.println(masterptr);
-  Serial.println(inStringPos);
-  Serial.println(inNumPos);
-  Serial.println("-------");
-  Serial.println("inString");
-  for (int i = 0; i < inStringPos; i++) {
-    Serial.println(inString[i]);
-  }
-  Serial.println("inNum:");
-  for (int i = 0; i < inNumPos; i++) {
-    Serial.print(inNum[i]);
-  }
-  Serial.print("\n");
-  Serial.println("------------");
-  
-  
 }
 
 String readEEPROM(int startadd, int stopadd) {
@@ -832,7 +798,6 @@ void choosefunckey (char key) {
       addtoarrays(key);
       for (int i = 0; i < 20; i++) {
         inStringCopy[i] = inString[i];
-        Serial.println(inStringCopy[i]);
       }
       float result;
       noInterrupts();
