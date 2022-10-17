@@ -237,7 +237,6 @@ void disMenuText() {
 void initEnv() {
   Serial.begin(9600);
   lcd.begin(20, 4);
-  reset();
   pinMode(BACKLIGHTPIN, OUTPUT);
   adjustbacklight(255);
   pinMode(A0, INPUT); //LDR
@@ -426,6 +425,10 @@ float calculate(String *inputArray) {
   }
   for (int i = 0; i < 20; i++) { //Root
     if (inputArray[i] == "R") {
+      if (emptyChecker(inputArray[i + 1])) {
+        error = true;
+        return 0;
+      }
       firstNum = floatMaker(inputArray[i + 1]);
       if (error == true) {
         return 0;
@@ -435,6 +438,10 @@ float calculate(String *inputArray) {
   }
   for (int i = 0; i < 20; i++) { //Division
     if (inputArray[i] == "/") {
+      if (emptyChecker(inputArray[i - 1]) || emptyChecker(inputArray[i + 1])) {
+        error = true;
+        return 0;
+      }
       firstNum = floatMaker(inputArray[i - 1]);
       secondNum = floatMaker(inputArray[i + 1]);
       if (secondNum == 0) {
@@ -451,6 +458,10 @@ float calculate(String *inputArray) {
   for (int i = 0; i < 20; i++) {
     if (inputArray[i] == "*") {
       //multiply
+      if (emptyChecker(inputArray[i - 1]) || emptyChecker(inputArray[i + 1])) {
+        error = true;
+        return 0;
+      }
       firstNum = floatMaker(inputArray[i - 1]);
       secondNum = floatMaker(inputArray[i + 1]);
       if (error == true) { //If error is detected error should be displayed instead.
@@ -463,6 +474,10 @@ float calculate(String *inputArray) {
   for (int i = 0; i < 20; i++) {
     if (inputArray[i] == "+") {
       //add
+      if (emptyChecker(inputArray[i - 1]) || emptyChecker(inputArray[i + 1])) {
+        error = true;
+        return 0;
+      }
       firstNum = floatMaker(inputArray[i - 1]);
       secondNum = floatMaker(inputArray[i + 1]);
       if (error == true) { //If error is detected error should be displayed instead.
@@ -475,6 +490,10 @@ float calculate(String *inputArray) {
   for (int i = 0; i < 20; i++) {
     if (inputArray[i] == "-") {
       //subtract
+      if (emptyChecker(inputArray[i - 1]) || emptyChecker(inputArray[i + 1])) {
+        error = true;
+        return 0;
+      }
       firstNum = floatMaker(inputArray[i - 1]);
       secondNum = floatMaker(inputArray[i + 1]);
       if (error == true) { //If error is detected error should be displayed instead.
@@ -491,6 +510,16 @@ float calculate(String *inputArray) {
   }
   else {
     Serial.println("Something is wrong.");
+  }
+}
+
+ bool emptyChecker(String num) {
+  if (num == "") {
+    error = true;
+    return true;
+  }
+  else {
+    return false;
   }
 }
 
@@ -545,10 +574,13 @@ int bracketFinder(int startBacket, String *inputArray) { //Find the indexes of t
   }
 }
 
-void reset() {
+void reset(bool full) {
   resetarrays();
   resetCounters();
   lcd.clear();
+  if (full) {
+    error = false;
+  }
 }
 
 //array modules
@@ -568,7 +600,6 @@ void resetCounters() {
   inStringPos = 0;
   cursorx = 0;
   cursory = 0;
-  error = false;
 }
 
 
@@ -646,7 +677,8 @@ void lastdig(char key) {
 }
 //Input keypresses
 void addtoarrays(char keys) {
-  if (calc = true) {
+
+  if (calc) {
     lcd.clear();
     lcd.setCursor(cursorx, cursory);
     calc = false;
@@ -694,8 +726,8 @@ void addtoarrays(char keys) {
 }
 
 void subFromArrays() {
- 
-  if (calc = true) {
+
+  if (calc) {
     lcd.clear();
     lcd.setCursor(cursorx, cursory);
     calc = false;
@@ -784,12 +816,16 @@ void memsubtract() {
 
 
 void keypads() {
+
   char key1 = keypad1.getKey();
   char key2 = keypad2.getKey();
   if (on == false && key2 != 'O') {
     return;
   }
   if (key1 != NO_KEY) {
+    if (error) {
+      reset(true);
+    }
     //Serial.println(key1);
     if (isDigit(key1)) {
       //add char to input and display arrays
@@ -799,6 +835,9 @@ void keypads() {
     }
   }
   if (key2 != NO_KEY) {
+    if (error) {
+      reset(true);
+    }
     //Serial.println(key2);
     if (isDigit(key2)) {
       //add char to input and display arrays
@@ -824,9 +863,9 @@ void choosefunckey (char key) {
       noInterrupts();
       result = calculate(inStringCopy);
       interrupts();
+      reset(false);
       lcd.setCursor(0, 3);
       lcd.println(result);
-      reset();
       break;
     case '+':
       //add plus to char array
@@ -854,6 +893,7 @@ void choosefunckey (char key) {
     case 'F' :
       adjustbacklight(0);
       lcd.clear();
+      resetFunc();
       on = false;
       break;
     case '(':
@@ -870,8 +910,8 @@ void choosefunckey (char key) {
       break;
     case 'C' :
       //Clear Last digit
-      if (error) {
-        reset();
+      if (error || calc) {
+        reset(true);
       }
       else {
         dellastinput();
@@ -879,7 +919,7 @@ void choosefunckey (char key) {
       break;
     case 'E' :
       //Clear Everything
-      reset();
+      reset(true);
       break;
     case 'Z' :
       //Memory Clear
