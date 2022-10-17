@@ -219,7 +219,7 @@ void timerSetup() {
 }
 
 ISR(TIMER1_COMPA_vect) {
-  keypads(); //Checks keypad every 200ms
+  keypads(); //Checks keypad every 100ms
   if (interruptCount == 10) { //Runs every second
     adjustbacklight(readLDR());
     interruptCount = 0;
@@ -521,15 +521,16 @@ float floatMaker(String input) {
   return input.toFloat(); //Turns input string into float and returns 
 }
 
-int bracketFinder(int startBacket, String inputArray[20]) { //Find the indexes of the close of a bracket
-  int openBrackets = 1;
-  for (int i = startBacket; i < 20; i++) {
+int bracketFinder(int startBacket, String *inputArray) { //Find the indexes of the close of a bracket
+  int openBrackets = 0;
+  for (int i = startBacket; i < 20; i++) {  
     if (inputArray[i] == "(") {
       openBrackets++;
     }
-    else if (openBrackets = ")") {
+    else if (inputArray[i] == ")") {
       openBrackets--;
     }
+
     if (openBrackets == 0) {
       return i;
     }
@@ -665,8 +666,10 @@ void addtoarrays(char keys) {
         inNumPos = 0;
       }
       else { //No numbers were entered eg. double operator
-        inString[inStringPos] = keys;
-        inStringPos += 1;
+      if (keys != '=') {
+          inString[inStringPos] = keys;
+          inStringPos += 1;
+        }
       }
 
     }
@@ -789,6 +792,7 @@ void choosefunckey (char key) {
       addtoarrays(key);
       for (int i = 0; i < 20; i++) {
         inStringCopy[i] = inString[i];
+        Serial.println(inStringCopy[i]);
       }
       float result;
       noInterrupts();
