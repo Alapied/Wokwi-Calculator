@@ -118,7 +118,7 @@ float lastnumber;
 String tempLastnumber = "";
 
 //EEPROM
-float Memory; 
+float Memory;
 int MemoryAddress = 22;
 int MemorySpace = 21; // last digit is the reset bool
 int PasswordAddress = 0;
@@ -140,7 +140,7 @@ bool errorShown = false;
 #define EE 12
 #define D4 11
 #define D5 10
-#define D6 9 
+#define D6 9
 #define D7 8
 #define BACKLIGHTPIN 6
 LiquidCrystal lcd(RS, EE, D4, D5, D6, D7);
@@ -156,17 +156,17 @@ void setup() {
   bool passwordCorrect = false;
   while (passwordCorrect == false) {
     Serial.println("Enter Password: ");
-    //Enter password  
+    //Enter password
     String password = readSerial();
     password.replace(" ", "");
     Serial.println(password);
-    if (password == ActualPassword){
+    if (password == ActualPassword) {
       passwordCorrect = true;
     } else {
       Serial.println("Incorrect");
     }
   }
-  lcd.setCursor(0,0);
+  lcd.setCursor(0, 0);
   //lcd.println(initialText);
 
   //Menu
@@ -174,24 +174,24 @@ void setup() {
   Serial.println("Welcome!");
   disMenuText();
   while (menu) {
-    lcd.setCursor(0,0);
+    lcd.setCursor(0, 0);
     lcd.print(initialText);
     String input = readSerial();
     switch (input.charAt(0)) {
       case '1':
         Serial.println("Change Init text mode");
         changeInitText();
-      break;
+        break;
       case '2':
         Serial.println("LDR Display mode");
         disLDR();
-      break;
+        break;
       case '3':
         Serial.println("Calculator mode");
         menu = false;
         timerSetup();
         lcd.clear();
-      break;
+        break;
     }
   }
 
@@ -234,22 +234,26 @@ void disMenuText() {
   Serial.println("3: Enter the calculator");
 }
 
-void initEnv(){
+void initEnv() {
   Serial.begin(9600);
-  lcd.begin(20,4);                     
+  lcd.begin(20, 4);
   pinMode(BACKLIGHTPIN, OUTPUT);
   adjustbacklight(255);
   pinMode(A0, INPUT); //LDR
   passwordcheck();
   wipememory();
   initialTextCheck();
+  if (! rtc.begin()) {
+    Serial.println("Couldn't find RTC");
+    while (1);
+  }
 }
 
-String readSerial(){
+String readSerial() {
   Serial.flush();
   String Output;
   delay(20);
-  while (Serial.available() == 0){} 
+  while (Serial.available() == 0) {}
   while (Serial.available() > 0) {
     Output = Serial.readString();
     Output.replace("\n", "");
@@ -258,38 +262,38 @@ String readSerial(){
   }
 }
 
-void adjustbacklight(int lux){
+void adjustbacklight(int lux) {
   analogWrite(BACKLIGHTPIN, lux);
 }
 
-void passwordcheck(){
+void passwordcheck() {
   int passwordresetval = EEPROM.read(PasswordAddress + PasswordSpace);//Read last val of password
   Serial.println(passwordresetval);
-  if (passwordresetval == 255){
+  if (passwordresetval == 255) {
     writeEEPROM(PasswordAddress, PasswordAddress + PasswordSpace - 1, DefaultPassword);
-  } 
-  ActualPassword = readEEPROM(PasswordAddress,PasswordAddress + PasswordSpace - 1);
+  }
+  ActualPassword = readEEPROM(PasswordAddress, PasswordAddress + PasswordSpace - 1);
   ActualPassword.replace(" ", "");
 }
-void checkformemory(){
+void checkformemory() {
   int memoryresetval = EEPROM.read(MemoryAddress + MemorySpace);//Read last val of memory
-  if (memoryresetval == 255){
+  if (memoryresetval == 255) {
     wipememory();
   } else {
     String tempMemory = readEEPROM(MemoryAddress, MemoryAddress + MemorySpace - 1);
     Memory = floatMaker(tempMemory);
-    EEPROM.write(MemoryAddress+MemorySpace, 0);
+    EEPROM.write(MemoryAddress + MemorySpace, 0);
   }
 }
-void wipememory(){
+void wipememory() {
   Memory = 0;
   String strmem = String(Memory);
   writeEEPROM(MemoryAddress, MemoryAddress + MemorySpace - 1, strmem);
 }
-void MemSaveEEPROM(){
+void MemSaveEEPROM() {
   String strmem = String(Memory);
   writeEEPROM(MemoryAddress, MemoryAddress + MemorySpace - 1, strmem);
-  EEPROM.write(MemoryAddress+MemorySpace, 0);
+  EEPROM.write(MemoryAddress + MemorySpace, 0);
 }
 void initialTextCheck() {
   int initialTextResetVal = EEPROM.read(initTextAddress + initTextSpace);
@@ -307,10 +311,10 @@ void changeInitText() {
   String input = readSerial();
   Serial.println(input);
   Serial.println("Do you want to Save this Text? [yes/no]");
-  
-  while (set){
+
+  while (set) {
     String yn = readSerial();
-    if (yn == "yes"){
+    if (yn == "yes") {
       if (input.length() <= 20) {
         initialText = input;
         writeEEPROM(initTextAddress, initTextAddress + initTextSpace - 1, initialText);
@@ -323,18 +327,18 @@ void changeInitText() {
         Serial.println("Text was too long, it was not saved!");
       }
 
-    } if (yn == "no"){
+    } if (yn == "no") {
       disMenuText();
       lcd.clear();
       return;
     }
-    
+
   }
-}  
+}
 
 void disLDR() {
   int light_intensity = readLDR();
-  if(EEPROM.read(ldrAddress) == 255) {
+  if (EEPROM.read(ldrAddress) == 255) {
     EEPROM.write(ldrAddress, 1);
     writeEEPROM(ldrAddress + 1, ldrAddress + ldrSpace, String(light_intensity));
     Serial.print("Current LDR value of ");
@@ -354,37 +358,41 @@ void disLDR() {
 void loop() {
   switch (mode) {
     case '0': //Calc mode
-      Serial.println("Mode 0");
-      if (error && errorShown == false){
+      if (error && errorShown == false) {
         lcd.clear();
-        lcd.setCursor(0,0);
+        lcd.setCursor(0, 0);
         lcd.print("Error");
         errorShown = true;
         return;
       }
-      else if (error == false){
+      else if (error == false) {
         updatedisplayonchange();
-        if (calc){
+        if (calc) {
           resetarrays();
           cursorx = 0;
           cursory = 0;
-          lcd.setCursor(0,0);
+          lcd.setCursor(0, 0);
           calc = false;
         }
       }
-    break;
+      delay(50);
+      break;
 
     case '1': //Temp & humidity mode
+      lcd.clear();
       displayTemp();
-    break;
-      
+      delay(50);
+      break;
+
     case '2':
+      lcd.clear();
       displayTime();
-    break;
+      delay(50);
+      break;
 
     default:
       Serial.println("Mode char out of range error");
-    break;
+      break;
   }
 }
 
@@ -393,20 +401,25 @@ int readLDR() {
   int mappedInput = map(input, 8, 1015, 255, 0);
   return mappedInput;
 }
-  
+
 
 void(* resetFunc) (void) = 0;
 
-float calculate(String inputArray[20]) {
+float calculate(String *inputArray) {
   float firstNum;
   float secondNum;
   for(int i = 0; i < 20; i++) { //Bracket
     if (inputArray[i] == "(") {
       int closeIndex = bracketFinder(i, inputArray);
       String tempArray[20];
-      for (int j = i + 1; j < closeIndex; j++) {
-        tempArray[j - i + 1] = tempArray[j];
+      for (int j = i; j < closeIndex - 1; j++) {
+        tempArray[j - i] = inputArray[j + 1];
       }
+      Serial.print("Calling calculate with: ");
+      for(int k = 0; k < 20; k++) {
+        Serial.print(tempArray[k]);
+      }
+      Serial.print("\n");
       float value = calculate(tempArray);
       closeIndex = bracketFinder(i, inputArray);
       reformArray(inputArray, i, closeIndex, value);
@@ -429,7 +442,7 @@ float calculate(String inputArray[20]) {
       if (error = true) {
         return 0;
       }
-      reformArray(inputArray, i, i + 1, firstNum / secondNum);
+      reformArray(inputArray, i - 1, i + 1, firstNum / secondNum);
       i--;
     }
   }
@@ -441,7 +454,7 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      reformArray(inputArray, i, i + 1, firstNum * secondNum);
+      reformArray(inputArray, i - 1, i + 1, firstNum * secondNum);
       i--;
     }
   }
@@ -453,7 +466,7 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      reformArray(inputArray, i, i + 1, firstNum + secondNum);
+      reformArray(inputArray, i - 1, i + 1, firstNum + secondNum);
       i--;
     }
   }
@@ -465,10 +478,16 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      reformArray(inputArray, i, i + 1, firstNum - secondNum);
+      reformArray(inputArray, i - 1, i + 1, firstNum - secondNum);
+      //Serial.println("Array reform");
+      // for (int j = 0; j < 20; j++) {
+      //   Serial.print(inputArray[j]);
+      // }
+      // Serial.print("\n");
       i--;
     }
   }
+  //Serial.println(inputArray[1]);
   if (inputArray[1] == "") { //Only one number is left.
     calc = true;
     return inputArray[0].toFloat();
@@ -504,7 +523,7 @@ float floatMaker(String input) {
 
 int bracketFinder(int startBacket, String inputArray[20]) { //Find the indexes of the close of a bracket
   int openBrackets = 1;
-  for (int i = startBacket; i < 20; i++) {  
+  for (int i = startBacket; i < 20; i++) {
     if (inputArray[i] == "(") {
       openBrackets++;
     }
@@ -523,7 +542,7 @@ void reset() {
 }
 
 //array modules
-void resetarrays(){
+void resetarrays() {
   for (int i = 0; i < 20; i++)
   {
     rawInput[i] = '\0';
@@ -544,12 +563,13 @@ void resetCounters() {
 
 void reformArray(String *inArray, int startIndex, int closeIndex, float newValue) {
   String newArray[20];
-  
-  for (int i = 0; i < startIndex - 1; i++){ //Enters all of the arrays items upto the one before the first number used
-    newArray[i] = inArray[i];
+  if (startIndex != 0) { 
+    for (int i = 0; i < startIndex; i++){ //Enters all of the arrays items upto the one before the first number used
+      newArray[i] = inArray[i];
+    }
   }
-  newArray[startIndex - 1] = newValue;
-  for (int i = startIndex; i < (20 - (closeIndex - startIndex)); i++) { //Moves everything down to fill out the new array.
+  newArray[startIndex] = newValue;
+  for (int i = startIndex + 1; i < (20 - (closeIndex - startIndex)); i++) { //Moves everything down to fill out the new array.
     newArray[i] = inArray[i + (closeIndex - startIndex)];
   }
   for (int i = 20 - (closeIndex - startIndex); i < 20; i++) {
@@ -561,22 +581,22 @@ void reformArray(String *inArray, int startIndex, int closeIndex, float newValue
 }
 
 //display functions
-void displayitem(char character){
-  lcd.setCursor(cursorx,cursory);
+void displayitem(char character) {
+  lcd.setCursor(cursorx, cursory);
   lcd.print(character);
   cursorx++;
 }
 
-void printarray(char displayarray[20]){
-    cursory = 0;
-    cursorx = 0;
-  for (int i = 0; i < 20; i++){
+void printarray(char displayarray[20]) {
+  cursory = 0;
+  cursorx = 0;
+  for (int i = 0; i < 20; i++) {
     displayitem(displayarray[i]);
   }
 }
 
-void updatedisplayonchange(){
-  if (displayupdated == false){
+void updatedisplayonchange() {
+  if (displayupdated == false) {
     printarray(rawInput);
     displayupdated = true;
   }
@@ -586,70 +606,51 @@ void displayTemp() {
   DHT.read22(7);
   int humidity = DHT.humidity;
   float temp = DHT.temperature;
-  if (temp < 0) {
-    lcd.setCursor(1, 7);
-    lcd.print(temp);
-    lcd.print("C");
-  }
-  else {
-    lcd.setCursor(1, 8);
-    lcd.print(temp);
-    lcd.print("C");
-  }
+  lcd.setCursor(0, 2);
+  lcd.print(temp);
+  lcd.print("C");
 
-  if (temp == 100) {
-    lcd.setCursor(2, 7);
-    lcd.print(humidity);
-    lcd.print("%");
-  }
-  else {
-    lcd.setCursor(2, 8);
-    lcd.print(humidity);
-    lcd.print("%");
-  }
+  lcd.setCursor(0, 1);
+  lcd.print(humidity);
+  lcd.print("%");
 }
 
 void displayTime() {
-  DateTime now = rtc.now();
-  Serial.println("time");
-  sec = now.second();
-  mins = now.minute();
-  hrs = now.hour();
-  lcd.setCursor(1, 6);
-  lcd.print(hrs);
-  lcd.print(":");
-  lcd.print(mins);
-  lcd.print(":");
-  lcd.print(sec);
+  DateTime current = rtc.now();
+  lcd.setCursor(6, 2);
+  char time[8];
+  sprintf(time, "%02d:%02d:%02d", current.hour(), current.minute(), current.second());
+  lcd.println(time);
 }
-void lastdig(char key){
+
+void lastdig(char key) {
   //if not digit or decimal
   //set last number
-  if(isDigit(key) || key == '.') { //Digit or decimal place
-      tempLastnumber + key;
+  if (isDigit(key) || key == '.') { //Digit or decimal place
+    tempLastnumber + key;
   } else {
     lastnumber = floatMaker(tempLastnumber);
     tempLastnumber = "";
   }
 }
 //Input keypresses
-void addtoarrays(char keys){
+void addtoarrays(char keys) {
   if (calc = true) {
     lcd.clear();
-    lcd.setCursor(cursorx,cursory);
+    lcd.setCursor(cursorx, cursory);
     calc = false;
-  } 
+  }
 
-  if (masterptr < 20){
+  if (masterptr < 20) {
     rawInput[masterptr] = keys;
     lastdig(keys);
-    if(isDigit(keys) || keys == '.') { //Digit or decimal place
+    if (isDigit(keys) || keys == '.') { //Digit or decimal place
       inNum[inNumPos] = keys;
       inNumPos++;
     }
-    else{ //Function key pressed
+    else { //Function key pressed
       String inputtedNumber = "";
-      if(inNum[0] != '\0') {  //True if any numbers were entered
+      if (inNum[0] != '\0') { //True if any numbers were entered
         for (int i = 0; i < inNumPos; i++) {
           inputtedNumber += inNum[i];
         }
@@ -659,15 +660,15 @@ void addtoarrays(char keys){
         inString[inStringPos] = inputtedNumber;
         if (keys != '=') {
           inString[inStringPos + 1] = keys;
-         inStringPos += 2;
+          inStringPos += 2;
         }
         inNumPos = 0;
       }
-      else{ //No numbers were entered eg. double operator
+      else { //No numbers were entered eg. double operator
         inString[inStringPos] = keys;
         inStringPos += 1;
       }
-      
+
     }
     masterptr++;
     displayupdated = false;
@@ -678,13 +679,13 @@ void addtoarrays(char keys){
   }
 }
 
-void subFromArrays(){
+void subFromArrays() {
   if (calc = true) {
     lcd.clear();
-    lcd.setCursor(cursorx,cursory);
+    lcd.setCursor(cursorx, cursory);
     calc = false;
   }
-  if (masterptr > 0){
+  if (masterptr > 0) {
     masterptr--;
     rawInput[masterptr] = '\0';
     displayupdated = false;
@@ -701,9 +702,9 @@ void subFromArrays(){
   }
 }
 
-String readEEPROM(int startadd,int stopadd){
+String readEEPROM(int startadd, int stopadd) {
   String Output;
-  for (int i = startadd; i <= stopadd; i++){
+  for (int i = startadd; i <= stopadd; i++) {
     char temp = EEPROM.read(i);
     Output = Output + temp;
   }
@@ -711,48 +712,48 @@ String readEEPROM(int startadd,int stopadd){
   return Output;
 }
 
-void writeEEPROM(int startadd,int stopadd, String msg){
+void writeEEPROM(int startadd, int stopadd, String msg) {
   int j = 0;
   char space = ' ';
-  for (int i = startadd; i <= stopadd; i++){
-    if (j < msg.length()){
+  for (int i = startadd; i <= stopadd; i++) {
+    if (j < msg.length()) {
       char temp = msg.charAt(j);
       //Serial.print(i);
       //Serial.println(temp);
-      EEPROM.write(i,temp);
-      
+      EEPROM.write(i, temp);
+
     } else {
-      EEPROM.write(i,space);
+      EEPROM.write(i, space);
     }
     j++;
   }
 }
-void dellastinput(){
+void dellastinput() {
   //take master pointer and retard by 1, delete from all arrays
   subFromArrays();
 }
 
-void memrecall(){
+void memrecall() {
   //recall memory from eeprom and input into function
   String memstring = String(Memory);
-  for (int i=0; i<memstring.length(); i++){
+  for (int i = 0; i < memstring.length(); i++) {
     char key = memstring.charAt(i);
     addtoarrays(key);
   }
 }
 
-void memadd(){
-// add last number into memory or whats currently in memory
+void memadd() {
+  // add last number into memory or whats currently in memory
   Memory = Memory + lastnumber;
   MemSaveEEPROM();
 }
-void memsubtract(){
- Memory = Memory - lastnumber;
+void memsubtract() {
+  Memory = Memory - lastnumber;
   MemSaveEEPROM();
 }
 
 
-void keypads(){
+void keypads() {
   char key1 = keypad1.getKey();
   char key2 = keypad2.getKey();
   if (on == false && key2 != 'O') {
@@ -760,7 +761,7 @@ void keypads(){
   }
   if (key1 != NO_KEY) {
     //Serial.println(key1);
-    if (isDigit(key1)){
+    if (isDigit(key1)) {
       //add char to input and display arrays
       addtoarrays(key1);
     } else {
@@ -769,7 +770,7 @@ void keypads(){
   }
   if (key2 != NO_KEY) {
     //Serial.println(key2);
-    if (isDigit(key2)){
+    if (isDigit(key2)) {
       //add char to input and display arrays
       addtoarrays(key2);
     } else {
@@ -779,21 +780,21 @@ void keypads(){
 }
 
 
-void choosefunckey (char key){
+void choosefunckey (char key) {
   //has to work this way given buttons have more than one use in some cases
   switch (key)
   {
     case '=':
       //Execute calculator function
       addtoarrays(key);
-      for(int i = 0; i < 20; i++) {
+      for (int i = 0; i < 20; i++) {
         inStringCopy[i] = inString[i];
       }
       float result;
       noInterrupts();
       result = calculate(inStringCopy);
       interrupts();
-      lcd.setCursor(0,3);
+      lcd.setCursor(0, 3);
       lcd.println(result);
       reset();
       break;
@@ -819,62 +820,64 @@ void choosefunckey (char key){
     case 'O':
       resetFunc();
       on = true;
-    break;
+      break;
     case 'F' :
       adjustbacklight(0);
       lcd.clear();
       on = false;
-    break;
-     case '(':
+      break;
+    case '(':
       addtoarrays(key);
-    break;
-     case ')':
+      break;
+    case ')':
       addtoarrays(key);
-    break;
+      break;
     case 'R':
       addtoarrays(key);
-    break;
+      break;
     case '%':
       addtoarrays(key);
-    break;
+      break;
     case 'C' :
       //Clear Last digit
       dellastinput();
-    break;
+      break;
     case 'E' :
       //Clear Everything
       reset();
-    break;
+      break;
     case 'Z' :
       //Memory Clear
       wipememory();
-    break;
+      break;
     case 'X' :
       //Memory Recall
       memrecall();
-    break;
+      break;
     case 'V' :
       //Memory Add
       memadd();
-    break;
+      break;
     case 'B' :
       //Memory Subtract
       memsubtract();
-    break;
+      break;
     case '_':
-      switch (mode){
+      switch (mode) {
         case '0':
           mode = '1';
-        break;
+          lcd.clear();
+          break;
         case '1':
           mode = '2';
-        break;
+          lcd.clear();
+          break;
         case '2':
           mode = '0';
-          Serial.println("Set Mode 0");
-        break;
+          lcd.clear();
+          break;
       }
-    break;
-    
+      break;
+
   }
 }
