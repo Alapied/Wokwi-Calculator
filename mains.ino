@@ -204,7 +204,7 @@ void timerSetup() {
   TCCR1B = 0;
   TCNT1 = 0;
 
-  OCR1A = 3124; // [16MHz/(1024 * 5Hz)] - 1
+  OCR1A = 1562.5; // [16MHz/(1024 * 10Hz)] - 1
 
   TCCR1B |= (1 << WGM12);
 
@@ -216,8 +216,9 @@ void timerSetup() {
 }
 
 ISR(TIMER1_COMPA_vect) {
-  Keypads(); //Checks keypad every 200ms
-  if (interruptCount == 5) { //Runs every second
+  keypads(); //Checks keypad every 100ms
+  if (interruptCount == 10) { //Runs every second
+    Serial.println(readLDR());
     adjustbacklight(readLDR());
     interruptCount = 0;
   }
@@ -234,7 +235,7 @@ void disMenuText() {
 void initEnv(){
   Serial.begin(9600);
   lcd.begin(20,4);                     
-  pinmode(BACKLIGHTPIN, OUTPUT);
+  pinMode(BACKLIGHTPIN, OUTPUT);
   adjustbacklight(255);
   pinMode(A0, INPUT); //LDR
   passwordcheck();
@@ -368,14 +369,17 @@ void loop() {
           calc = false;
         }
       }
+      delay(100);
     break;
 
     case '1': //Temp & humidity mode
       displayTemp();
+      delay(100);
     break;
       
     case '2':
       displayTime();
+      delay(100);
     break;
 
     default:
@@ -393,19 +397,29 @@ int readLDR() {
 
 void(* resetFunc) (void) = 0;
 
-float calculate(String inputArray[20]) {
+float calculate(String *inputArray) {
   float firstNum;
   float secondNum;
   for(int i = 0; i < 20; i++) { //Bracket
     if (inputArray[i] == "(") {
       int closeIndex = bracketFinder(i, inputArray);
       String tempArray[20];
-      for (int j = i + 1; j < closeIndex; j++) {
-        tempArray[j - i + 1] = tempArray[j];
+      for (int j = i; j < closeIndex - 1; j++) {
+        tempArray[j - i] = inputArray[j + 1];
       }
+      Serial.print("Calling calculate with: ");
+      for(int k = 0; k < 20; k++) {
+        Serial.print(tempArray[k]);
+      }
+      Serial.print("\n");
       float value = calculate(tempArray);
       closeIndex = bracketFinder(i, inputArray);
       reformArray(inputArray, i, closeIndex, value);
+      // Serial.println("Array reform");
+      // for (int j = 0; j < 20; j++) {
+      //   Serial.print(inputArray[j]);
+      // }
+      // Serial.print("\n");
       i--;
     }
   }
@@ -416,6 +430,11 @@ float calculate(String inputArray[20]) {
         return 0;
       }
       reformArray(inputArray, i, i + 1, sqrt(firstNum));
+      // Serial.println("Array reform");
+      // for (int j = 0; j < 20; j++) {
+      //   Serial.print(inputArray[j]);
+      // }
+      // Serial.print("\n");
     }
   }
   for(int i = 0; i < 20; i++) { //Division
@@ -425,7 +444,12 @@ float calculate(String inputArray[20]) {
       if (error = true) {
         return 0;
       }
-      reformArray(inputArray, i, i + 1, firstNum / secondNum);
+      reformArray(inputArray, i - 1, i + 1, firstNum / secondNum);
+      // Serial.println("Array reform");
+      // for (int j = 0; j < 20; j++) {
+      //   Serial.print(inputArray[j]);
+      // }
+      // Serial.print("\n");
       i--;
     }
   }
@@ -437,7 +461,12 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      reformArray(inputArray, i, i + 1, firstNum * secondNum);
+      reformArray(inputArray, i - 1, i + 1, firstNum * secondNum);
+      // Serial.println("Array reform");
+      // for (int j = 0; j < 20; j++) {
+      //   Serial.print(inputArray[j]);
+      // }
+      // Serial.print("\n");
       i--;
     }
   }
@@ -449,7 +478,12 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      reformArray(inputArray, i, i + 1, firstNum + secondNum);
+      reformArray(inputArray, i - 1, i + 1, firstNum + secondNum);
+      // Serial.println("Array reform");
+      // for (int j = 0; j < 20; j++) {
+      //   Serial.print(inputArray[j]);
+      // }
+      // Serial.print("\n");
       i--;
     }
   }
@@ -461,12 +495,25 @@ float calculate(String inputArray[20]) {
       if(error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
-      reformArray(inputArray, i, i + 1, firstNum - secondNum);
+      Serial.print("Reforming:");
+      Serial.print(i - 1);
+      Serial.print(" ");
+      Serial.println(i + 1);
+      reformArray(inputArray, i - 1, i + 1, firstNum - secondNum);
+      //Serial.println("Array reform");
+      // for (int j = 0; j < 20; j++) {
+      //   Serial.print(inputArray[j]);
+      // }
+      // Serial.print("\n");
       i--;
     }
   }
+  //Serial.println(inputArray[1]);
   if (inputArray[1] == "") { //Only one number is left.
     calc = true;
+    Serial.println(inputArray[0]);
+    Serial.print("Returning ");
+    Serial.println(inputArray[0].toFloat());
     return inputArray[0].toFloat();
   }
   else {
@@ -498,15 +545,16 @@ float floatMaker(String input) {
   return input.toFloat(); //Turns input string into float and returns 
 }
 
-int bracketFinder(int startBacket, String inputArray[20]) { //Find the indexes of the close of a bracket
-  int openBrackets = 1;
+int bracketFinder(int startBacket, String *inputArray) { //Find the indexes of the close of a bracket
+  int openBrackets = 0;
   for (int i = startBacket; i < 20; i++) {  
     if (inputArray[i] == "(") {
       openBrackets++;
     }
-    else if (openBrackets = ")") {
+    else if (inputArray[i] == ")") {
       openBrackets--;
     }
+
     if (openBrackets == 0) {
       return i;
     }
@@ -540,12 +588,13 @@ void resetCounters() {
 
 void reformArray(String *inArray, int startIndex, int closeIndex, float newValue) {
   String newArray[20];
-  
-  for (int i = 0; i < startIndex - 1; i++){ //Enters all of the arrays items upto the one before the first number used
-    newArray[i] = inArray[i];
+  if (startIndex != 0) { 
+    for (int i = 0; i < startIndex; i++){ //Enters all of the arrays items upto the one before the first number used
+      newArray[i] = inArray[i];
+    }
   }
-  newArray[startIndex - 1] = newValue;
-  for (int i = startIndex; i < (20 - (closeIndex - startIndex)); i++) { //Moves everything down to fill out the new array.
+  newArray[startIndex] = newValue;
+  for (int i = startIndex + 1; i < (20 - (closeIndex - startIndex)); i++) { //Moves everything down to fill out the new array.
     newArray[i] = inArray[i + (closeIndex - startIndex)];
   }
   for (int i = 20 - (closeIndex - startIndex); i < 20; i++) {
@@ -582,33 +631,21 @@ void displayTemp() {
   DHT.read22(7);
   int humidity = DHT.humidity;
   float temp = DHT.temperature;
-  if (temp < 0) {
-    lcd.setCursor(1, 7);
-    lcd.print(temp);
-    lcd.print("C");
-  }
-  else {
-    lcd.setCursor(1, 8);
-    lcd.print(temp);
-    lcd.print("C");
-  }
+  lcd.clear();
+  lcd.setCursor(0, 1);
+  lcd.print(temp);
+  lcd.print("C");
 
-  if (temp == 100) {
-    lcd.setCursor(2, 7);
-    lcd.print(humidity);
-    lcd.print("%");
-  }
-  else {
-    lcd.setCursor(2, 8);
-    lcd.print(humidity);
-    lcd.print("%");
-  }
+  lcd.setCursor(0, 2);
+  lcd.print(humidity);
+  lcd.print("%");
 }
 
 void displayTime() {
   DateTime now = rtc.now();
   char time[20];
   sprintf(time, "%02d:%02d:%02d", now.hour(), now.minute(), now.second());
+  lcd.clear();
   lcd.setCursor(1, 6);
   lcd.println(time);
 }
