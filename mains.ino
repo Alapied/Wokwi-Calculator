@@ -408,7 +408,7 @@ void(* resetFunc) (void) = 0;
 float calculate(String *inputArray) {
   float firstNum;
   float secondNum;
-  for(int i = 0; i < 20; i++) { //Bracket
+  for (int i = 0; i < 20; i++) { //Bracket
     if (inputArray[i] == "(") {
       int closeIndex = bracketFinder(i, inputArray);
       String tempArray[20];
@@ -416,7 +416,7 @@ float calculate(String *inputArray) {
         tempArray[j - i] = inputArray[j + 1];
       }
       Serial.print("Calling calculate with: ");
-      for(int k = 0; k < 20; k++) {
+      for (int k = 0; k < 20; k++) {
         Serial.print(tempArray[k]);
       }
       Serial.print("\n");
@@ -426,7 +426,7 @@ float calculate(String *inputArray) {
       i--;
     }
   }
-  for(int i = 0; i < 20; i++) { //Root
+  for (int i = 0; i < 20; i++) { //Root
     if (inputArray[i] == "R") {
       firstNum = floatMaker(inputArray[i + 1]);
       if (error = true) {
@@ -435,7 +435,7 @@ float calculate(String *inputArray) {
       reformArray(inputArray, i, i + 1, sqrt(firstNum));
     }
   }
-  for(int i = 0; i < 20; i++) { //Division
+  for (int i = 0; i < 20; i++) { //Division
     if (inputArray[i] == "/") {
       firstNum = floatMaker(inputArray[i - 1]);
       secondNum = floatMaker(inputArray[i - 1]);
@@ -446,36 +446,36 @@ float calculate(String *inputArray) {
       i--;
     }
   }
-  for(int i = 0; i < 20; i++) {
+  for (int i = 0; i < 20; i++) {
     if (inputArray[i] == "*") {
       //multiply
       firstNum = floatMaker(inputArray[i - 1]);
       secondNum = floatMaker(inputArray[i + 1]);
-      if(error == true) { //If error is detected error should be displayed instead.
+      if (error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
       reformArray(inputArray, i - 1, i + 1, firstNum * secondNum);
       i--;
     }
   }
-  for(int i = 0; i < 20; i++) {
+  for (int i = 0; i < 20; i++) {
     if (inputArray[i] == "+") {
       //add
       firstNum = floatMaker(inputArray[i - 1]);
       secondNum = floatMaker(inputArray[i + 1]);
-      if(error == true) { //If error is detected error should be displayed instead.
+      if (error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
       reformArray(inputArray, i - 1, i + 1, firstNum + secondNum);
       i--;
     }
   }
-  for(int i = 0; i < 20; i++) {
+  for (int i = 0; i < 20; i++) {
     if (inputArray[i] == "-") {
       //subtract
       firstNum = floatMaker(inputArray[i - 1]);
       secondNum = floatMaker(inputArray[i + 1]);
-      if(error == true) { //If error is detected error should be displayed instead.
+      if (error == true) { //If error is detected error should be displayed instead.
         return 0;
       }
       reformArray(inputArray, i - 1, i + 1, firstNum - secondNum);
@@ -500,7 +500,7 @@ float calculate(String *inputArray) {
 float floatMaker(String input) {
   char readin;
   bool dec = false;
-  for(int j = 0; j < input.length(); j++) {
+  for (int j = 0; j < input.length(); j++) {
     readin = input.charAt(j);
     if (isdigit(readin) == false) {
       if (readin != '.' && readin != '-') { //Not a digit or decimal place
@@ -518,12 +518,12 @@ float floatMaker(String input) {
       }
     }
   }
-  return input.toFloat(); //Turns input string into float and returns 
+  return input.toFloat(); //Turns input string into float and returns
 }
 
 int bracketFinder(int startBacket, String *inputArray) { //Find the indexes of the close of a bracket
   int openBrackets = 0;
-  for (int i = startBacket; i < 20; i++) {  
+  for (int i = startBacket; i < 20; i++) {
     if (inputArray[i] == "(") {
       openBrackets++;
     }
@@ -564,8 +564,8 @@ void resetCounters() {
 
 void reformArray(String *inArray, int startIndex, int closeIndex, float newValue) {
   String newArray[20];
-  if (startIndex != 0) { 
-    for (int i = 0; i < startIndex; i++){ //Enters all of the arrays items upto the one before the first number used
+  if (startIndex != 0) {
+    for (int i = 0; i < startIndex; i++) { //Enters all of the arrays items upto the one before the first number used
       newArray[i] = inArray[i];
     }
   }
@@ -651,7 +651,7 @@ void addtoarrays(char keys) {
     }
     else { //Function key pressed
       String inputtedNumber = "";
-      if (inNum[0] != '\0') { //True if any numbers were entered
+      if (inNumPos != 0) { //True if any numbers were entered
         for (int i = 0; i < inNumPos; i++) {
           inputtedNumber += inNum[i];
         }
@@ -659,14 +659,15 @@ void addtoarrays(char keys) {
           inNum[i] = '\0';
         }
         inString[inStringPos] = inputtedNumber;
+        inStringPos++;
         if (keys != '=') {
-          inString[inStringPos + 1] = keys;
-          inStringPos += 2;
+          inString[inStringPos] = keys;
+          inStringPos++;
         }
         inNumPos = 0;
       }
       else { //No numbers were entered eg. double operator
-      if (keys != '=') {
+        if (keys != '=') {
           inString[inStringPos] = keys;
           inStringPos += 1;
         }
@@ -683,26 +684,65 @@ void addtoarrays(char keys) {
 }
 
 void subFromArrays() {
+  Serial.println(masterptr);
+  Serial.println(inStringPos);
+  Serial.println(inNumPos);
+  Serial.println("---");
+
   if (calc = true) {
     lcd.clear();
     lcd.setCursor(cursorx, cursory);
     calc = false;
   }
+
   if (masterptr > 0) {
     masterptr--;
     rawInput[masterptr] = '\0';
     displayupdated = false;
-  }
-  if (inNum[0] != '\0') {
-    inNumPos--;
-    inNum[inNumPos] = '/0';
-    displayupdated = false;
 
+    if (inNumPos != 0) {
+      inNumPos--;
+      inNum[inNumPos] = '/0';
+      displayupdated = false;
+
+    }
+    else {
+      inStringPos--;
+      String currentNum = inString[inStringPos];
+      if (isDigit(currentNum.charAt(0))) {
+        int len = currentNum.length();
+        currentNum.remove(len - 1);
+        inString[inStringPos] = "";
+        for (int i = 0; i < len; i++) {
+          inNum[i] = currentNum.charAt(i);
+        } 
+        inNumPos = len - 1;
+        
+        Serial.print("\n");
+      }
+      else {
+        inString[inStringPos] = "";
+      }
+      displayupdated = false;
+    }
   }
-  else {
-    inStringPos--;
-    inString[inStringPos] = "";
+
+  Serial.println(masterptr);
+  Serial.println(inStringPos);
+  Serial.println(inNumPos);
+  Serial.println("-------");
+  Serial.println("inString");
+  for (int i = 0; i < inStringPos; i++) {
+    Serial.println(inString[i]);
   }
+  Serial.println("inNum:");
+  for (int i = 0; i < inNumPos; i++) {
+    Serial.print(inNum[i]);
+  }
+  Serial.print("\n");
+  Serial.println("------------");
+  
+  
 }
 
 String readEEPROM(int startadd, int stopadd) {
