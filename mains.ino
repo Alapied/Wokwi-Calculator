@@ -179,12 +179,15 @@ void setup() {
     String input = readSerial();
     switch (input.charAt(0)) {
       case '1':
+        Serial.println("Change Init text mode");
         changeInitText();
       break;
       case '2':
+        Serial.println("LDR Display mode");
         disLDR();
       break;
       case '3':
+        Serial.println("Calculator mode");
         menu = false;
         timerSetup();
         lcd.clear();
@@ -216,10 +219,8 @@ void timerSetup() {
 }
 
 ISR(TIMER1_COMPA_vect) {
-  keypads(); //Checks keypad every 100ms
-  if (interruptCount == 10) { //Runs every second
-    Serial.println(readLDR());
-    adjustbacklight(readLDR());
+  Keypads(); //Checks keypad every 200ms
+  if (interruptCount == 5) { //Runs every second
     interruptCount = 0;
   }
   interruptCount++;
@@ -331,9 +332,8 @@ void changeInitText() {
 }  
 
 void disLDR() {
-  
+  int light_intensity = readLDR();
   if(EEPROM.read(ldrAddress) == 255) {
-    int light_intensity = readLDR();
     EEPROM.write(ldrAddress, 1);
     writeEEPROM(ldrAddress + 1, ldrAddress + ldrSpace, String(light_intensity));
     Serial.print("Current LDR value of ");
@@ -346,6 +346,7 @@ void disLDR() {
   Serial.println(" was read from the EEPROM!");
   Serial.print("Current value is ");
   Serial.println(readLDR());
+  adjustbacklight(light_intensity);
   disMenuText();
 }
 
