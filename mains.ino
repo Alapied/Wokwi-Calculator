@@ -207,7 +207,7 @@ void timerSetup() {
   TCCR1B = 0;
   TCNT1 = 0;
 
-  OCR1A = 3124; // [16MHz/(1024 * 5Hz)] - 1
+  OCR1A = 1562.5; // [16MHz/(1024 * 10Hz)] - 1
 
   TCCR1B |= (1 << WGM12);
 
@@ -220,7 +220,7 @@ void timerSetup() {
 
 ISR(TIMER1_COMPA_vect) {
   keypads(); //Checks keypad every 200ms
-  if (interruptCount == 5) { //Runs every second
+  if (interruptCount == 10) { //Runs every second
     adjustbacklight(readLDR());
     interruptCount = 0;
   }
