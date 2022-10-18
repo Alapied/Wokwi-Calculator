@@ -216,10 +216,6 @@ void disMenuText() {
   Serial.println("3: Enter the calculator");
 }
 
-void createCustomChars(){
-  lcd.createChar(3, SqrRootSymb);
-}
-
 void initEnv() {
   Serial.begin(9600);
   lcd.begin(20, 4);
@@ -613,7 +609,7 @@ void reformArray(String *inArray, int startIndex, int closeIndex, float newValue
 
 //display functions
 void displayitem(char character) {
-  char modcharacter
+  char modcharacter;
   switch (character){
     case 'R':
       modcharacter = '\x03';
@@ -622,7 +618,7 @@ void displayitem(char character) {
       modcharacter ='X';
     break;
     default:
-      character = modcharacter
+      modcharacter = character;
     break;
   }
   lcd.setCursor(cursorx, cursory);
