@@ -64,17 +64,8 @@ uint8_t rowPins2[ROWS] = { P2R1, P2R2, P2R3, P2R4 }; // Pins connected to R1, R2
 
 
 //constants
-byte DivisionSymb[] = {
-  B00000,
-  B00100,
-  B00000,
-  B11111,
-  B11111,
-  B00000,
-  B00100,
-  B00000
-};
-byte SqrRootSymb[] = {
+
+byte SqrRootSymb[8] = {
   B00000,
   B00011,
   B00010,
@@ -84,16 +75,7 @@ byte SqrRootSymb[] = {
   B01010,
   B00100
 };
-byte MultiplySymb[] = {
-  B00000,
-  B00000,
-  B10001,
-  B01010,
-  B00100,
-  B01010,
-  B10001,
-  B00000
-};
+
 
 String DefaultPassword = "EEE20003";
 String ActualPassword = "";
@@ -234,6 +216,10 @@ void disMenuText() {
   Serial.println("3: Enter the calculator");
 }
 
+void createCustomChars(){
+  lcd.createChar(3, SqrRootSymb);
+}
+
 void initEnv() {
   Serial.begin(9600);
   lcd.begin(20, 4);
@@ -243,12 +229,15 @@ void initEnv() {
   passwordcheck();
   wipememory();
   initialTextCheck();
+  createCustomChars();
   if (! rtc.begin()) {
     Serial.println("Couldn't find RTC");
     while (1);
   }
 }
-
+void createCustomChars(){
+  lcd.createChar(3, SqrRootSymb);
+}
 String readSerial() {
   Serial.flush();
   String Output;
@@ -624,8 +613,20 @@ void reformArray(String *inArray, int startIndex, int closeIndex, float newValue
 
 //display functions
 void displayitem(char character) {
+  char modcharacter
+  switch (character){
+    case 'R':
+      modcharacter = '\x03';
+    break;
+    case '*':
+      modcharacter ='X';
+    break;
+    default:
+      character = modcharacter
+    break;
+  }
   lcd.setCursor(cursorx, cursory);
-  lcd.print(character);
+  lcd.print(modcharacter);
   cursorx++;
 }
 
@@ -677,7 +678,7 @@ void lastdig(char key) {
 }
 //Input keypresses
 void addtoarrays(char keys) {
-
+  lastdig(keys);
   if (calc) {
     lcd.clear();
     lcd.setCursor(cursorx, cursory);
