@@ -49,7 +49,7 @@ uint8_t rowPins1[ROWS] = { P1R1, P1R2, P1R3, P1R4 }; // Pins connected to R1, R2
 #define P2C4 39
 
 char keys2[ROWS][COLS] = {
-  { 'T', 'E', '<', '(' },
+  { '^', 'E', '<', '(' },
   { 'R', 'Z', 'X', ')' },
   { '%', 'V', 'B', '_' },
   { 'O', 'C', 'F', '!' }
@@ -64,8 +64,17 @@ uint8_t rowPins2[ROWS] = { P2R1, P2R2, P2R3, P2R4 }; // Pins connected to R1, R2
 
 
 //constants
-
-byte SqrRootSymb[8] = {
+byte DivisionSymb[] = {
+  B00000,
+  B00100,
+  B00000,
+  B11111,
+  B11111,
+  B00000,
+  B00100,
+  B00000
+};
+byte SqrRootSymb[] = {
   B00000,
   B00011,
   B00010,
@@ -75,7 +84,26 @@ byte SqrRootSymb[8] = {
   B01010,
   B00100
 };
-
+byte MultiplySymb[] = {
+  B00000,
+  B00000,
+  B10001,
+  B01010,
+  B00100,
+  B01010,
+  B10001,
+  B00000
+};
+byte smallMinusSymb[] = {
+  B00000,
+  B00000,
+  B00000,
+  B00111,
+  B00000,
+  B00000,
+  B00000,
+  B00000
+}
 
 String DefaultPassword = "EEE20003";
 String ActualPassword = "";
@@ -202,7 +230,7 @@ void timerSetup() {
 
 ISR(TIMER1_COMPA_vect) {
   keypads(); //Checks keypad every 100ms
-  if (interruptCount == 10) { //Runs every second
+  if (interruptCount == 10 && on) { //Runs every second when the calculator is on
     adjustbacklight(readLDR());
     interruptCount = 0;
   }
@@ -225,15 +253,12 @@ void initEnv() {
   passwordcheck();
   wipememory();
   initialTextCheck();
-  createCustomChars();
   if (! rtc.begin()) {
     Serial.println("Couldn't find RTC");
     while (1);
   }
 }
-void createCustomChars(){
-  lcd.createChar(3, SqrRootSymb);
-}
+
 String readSerial() {
   Serial.flush();
   String Output;
@@ -392,7 +417,7 @@ void(* resetFunc) (void) = 0;
 float calculate(String *inputArray) {
   float firstNum;
   float secondNum;
-  for (int i = 0; i < 20; i++) { //Bracket
+  for (int i = 0; i < inStringPos; i++) { //Bracket
     if (inputArray[i] == "(") {
       int closeIndex = bracketFinder(i, inputArray);
       String tempArray[20];
@@ -408,20 +433,31 @@ float calculate(String *inputArray) {
       i--;
     }
   }
-  for (int i = 0; i < 20; i++) { //Root
-    if (inputArray[i] == "R") {
-      if (emptyChecker(inputArray[i + 1])) {
-        error = true;
-        return 0;
+  for (int i = 0; i < inStringPos; i++) { //Root & indicies 
+    if (inputArray[i] == "R" || inputArray[i] == "^") {
+      if (inputArray[i] == "R") { //Root
+        if (emptyChecker(inputArray[i + 1])) {
+          error = true;
+          return 0;
+        }
+        firstNum = floatMaker(inputArray[i + 1]);
+        if (error == true) {
+          return 0;
+        }
+        reformArray(inputArray, i, i + 1, pow(firstNum, 1/2));
       }
-      firstNum = floatMaker(inputArray[i + 1]);
-      if (error == true) {
-        return 0;
+      else {
+        if (emptyChecker(inputArray[i - 1]) || emptyChecker(inputArray[i + 1])) {
+          error = true;
+          return 0;
+        }
+        reformArray(inputArray, i - 1, i + 1, pow(firstNum, secondNum));
+        i--;
       }
-      reformArray(inputArray, i, i + 1, sqrt(firstNum));
+      
     }
   }
-  for (int i = 0; i < 20; i++) { //Division
+  for (int i = 0; i < inStringPos; i++) { //Division
     if (inputArray[i] == "/") {
       if (emptyChecker(inputArray[i - 1]) || emptyChecker(inputArray[i + 1])) {
         error = true;
@@ -440,7 +476,7 @@ float calculate(String *inputArray) {
       i--;
     }
   }
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < inStringPos; i++) {
     if (inputArray[i] == "*") {
       //multiply
       if (emptyChecker(inputArray[i - 1]) || emptyChecker(inputArray[i + 1])) {
@@ -456,7 +492,7 @@ float calculate(String *inputArray) {
       i--;
     }
   }
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < inStringPos; i++) {
     if (inputArray[i] == "+") {
       //add
       if (emptyChecker(inputArray[i - 1]) || emptyChecker(inputArray[i + 1])) {
@@ -472,7 +508,7 @@ float calculate(String *inputArray) {
       i--;
     }
   }
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < inStringPos; i++) {
     if (inputArray[i] == "-") {
       //subtract
       if (emptyChecker(inputArray[i - 1]) || emptyChecker(inputArray[i + 1])) {
@@ -498,7 +534,7 @@ float calculate(String *inputArray) {
   }
 }
 
- bool emptyChecker(String num) {
+bool emptyChecker(String num) {
   if (num == "") {
     error = true;
     return true;
@@ -609,20 +645,8 @@ void reformArray(String *inArray, int startIndex, int closeIndex, float newValue
 
 //display functions
 void displayitem(char character) {
-  char modcharacter;
-  switch (character){
-    case 'R':
-      modcharacter = '\x03';
-    break;
-    case '*':
-      modcharacter ='X';
-    break;
-    default:
-      modcharacter = character;
-    break;
-  }
   lcd.setCursor(cursorx, cursory);
-  lcd.print(modcharacter);
+  lcd.print(character);
   cursorx++;
 }
 
@@ -674,7 +698,7 @@ void lastdig(char key) {
 }
 //Input keypresses
 void addtoarrays(char keys) {
-  lastdig(keys);
+
   if (calc) {
     lcd.clear();
     lcd.setCursor(cursorx, cursory);
@@ -884,13 +908,12 @@ void choosefunckey (char key) {
       addtoarrays(key);
       break;
     case 'O':
-      resetFunc();
       on = true;
+      resetFunc();
       break;
     case 'F' :
       adjustbacklight(0);
       lcd.clear();
-      resetFunc();
       on = false;
       break;
     case '(':
@@ -901,6 +924,7 @@ void choosefunckey (char key) {
       break;
     case 'R':
       addtoarrays(key);
+      addtoarrays('(');
       break;
     case '%':
       addtoarrays(key);
@@ -933,6 +957,13 @@ void choosefunckey (char key) {
     case 'B' :
       //Memory Subtract
       memsubtract();
+      break;
+    case '^':
+      addtoarrays(key);
+      addtoarrays('('); 
+      break;
+    case '<':
+      addtoarrays(key); 
       break;
     case '_':
       switch (mode) {
