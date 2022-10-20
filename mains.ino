@@ -1,4 +1,3 @@
-//Import Libraries
 #include <LiquidCrystal.h>
 #include <Wire.h>
 #include <Keypad.h>
@@ -49,7 +48,6 @@ uint8_t rowPins1[ROWS] = { P1R1, P1R2, P1R3, P1R4 }; // Pins connected to R1, R2
 #define P2C4 39
 
 char keys2[ROWS][COLS] = {
-  { '^', 'E', '<', '(' },
   { 'R', 'Z', 'X', ')' },
   { '%', 'V', 'B', '_' },
   { 'O', 'C', 'F', '!' }
@@ -64,17 +62,8 @@ uint8_t rowPins2[ROWS] = { P2R1, P2R2, P2R3, P2R4 }; // Pins connected to R1, R2
 
 
 //constants
-byte DivisionSymb[] = {
-  B00000,
-  B00100,
-  B00000,
-  B11111,
-  B11111,
-  B00000,
-  B00100,
-  B00000
-};
-byte SqrRootSymb[] = {
+
+byte SqrRootSymb[8] = {
   B00000,
   B00011,
   B00010,
@@ -84,26 +73,7 @@ byte SqrRootSymb[] = {
   B01010,
   B00100
 };
-byte MultiplySymb[] = {
-  B00000,
-  B00000,
-  B10001,
-  B01010,
-  B00100,
-  B01010,
-  B10001,
-  B00000
-};
-byte smallMinusSymb[] = {
-  B00000,
-  B00000,
-  B00000,
-  B00111,
-  B00000,
-  B00000,
-  B00000,
-  B00000
-}
+
 
 String DefaultPassword = "EEE20003";
 String ActualPassword = "";
@@ -230,7 +200,7 @@ void timerSetup() {
 
 ISR(TIMER1_COMPA_vect) {
   keypads(); //Checks keypad every 100ms
-  if (interruptCount == 10 && on) { //Runs every second when the calculator is on
+  if (interruptCount == 10) { //Runs every second
     adjustbacklight(readLDR());
     interruptCount = 0;
   }
@@ -253,12 +223,15 @@ void initEnv() {
   passwordcheck();
   wipememory();
   initialTextCheck();
+  createCustomChars();
   if (! rtc.begin()) {
     Serial.println("Couldn't find RTC");
     while (1);
   }
 }
-
+void createCustomChars(){
+  lcd.createChar(3, SqrRootSymb);
+}
 String readSerial() {
   Serial.flush();
   String Output;
@@ -417,7 +390,6 @@ void(* resetFunc) (void) = 0;
 float calculate(String *inputArray) {
   float firstNum;
   float secondNum;
-  for (int i = 0; i < inStringPos; i++) { //Bracket
     if (inputArray[i] == "(") {
       int closeIndex = bracketFinder(i, inputArray);
       String tempArray[20];
@@ -534,7 +506,6 @@ float calculate(String *inputArray) {
   }
 }
 
-bool emptyChecker(String num) {
   if (num == "") {
     error = true;
     return true;
@@ -646,7 +617,6 @@ void reformArray(String *inArray, int startIndex, int closeIndex, float newValue
 //display functions
 void displayitem(char character) {
   lcd.setCursor(cursorx, cursory);
-  lcd.print(character);
   cursorx++;
 }
 
@@ -698,7 +668,6 @@ void lastdig(char key) {
 }
 //Input keypresses
 void addtoarrays(char keys) {
-
   if (calc) {
     lcd.clear();
     lcd.setCursor(cursorx, cursory);
@@ -908,12 +877,12 @@ void choosefunckey (char key) {
       addtoarrays(key);
       break;
     case 'O':
-      on = true;
       resetFunc();
       break;
     case 'F' :
       adjustbacklight(0);
       lcd.clear();
+      resetFunc();
       on = false;
       break;
     case '(':
