@@ -97,6 +97,10 @@ char mode = '0'; //0 is calc, 1 is temp/humidity, 2 is time.
 float lastnumber;
 String tempLastnumber = "";
 
+int humidity = 0;
+float temp = 0.0;
+DateTime past;
+
 //EEPROM
 float Memory;
 int MemoryAddress = 22;
@@ -638,26 +642,42 @@ void updatedisplayonchange() {
     displayupdated = true;
   }
 }
+void readsensor(){
+  DHT.read22(7);
+  int temphumidity = DHT.humidity;
+  float temptemp = DHT.temperature;
+  if ((temphumidity == humidity) or (temptemp == temp)){
+    // do nothing
+  } else {
+    humidity = temphumidity
+    temp = temptemp;
+    displayupdated = false;
+  }
+  
+}
 
 void displayTemp() {
-  DHT.read22(7);
-  int humidity = DHT.humidity;
-  float temp = DHT.temperature;
-  lcd.setCursor(0, 2);
-  lcd.print(temp);
-  lcd.print("C");
-
-  lcd.setCursor(0, 1);
-  lcd.print(humidity);
-  lcd.print("%");
+  readsensor();
+  if (displayupdated == false){
+    lcd.setCursor(0, 2);
+    lcd.print(temp);
+    lcd.print("C");
+    lcd.setCursor(0, 1);
+    lcd.print(humidity);
+    lcd.print("%");
+    displayupdated = true;
+  } 
 }
 
 void displayTime() {
   DateTime current = rtc.now();
-  lcd.setCursor(6, 2);
-  char time[8];
-  sprintf(time, "%02d:%02d:%02d", current.hour(), current.minute(), current.second());
-  lcd.println(time);
+  if (current != past){
+    past = current;
+    lcd.setCursor(6, 2);
+    char time[8];
+    sprintf(time, "%02d:%02d:%02d", current.hour(), current.minute(), current.second());
+    lcd.println(time);
+  }
 }
 
 void lastdig(char key) {
