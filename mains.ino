@@ -129,6 +129,8 @@ Keypad keypad2 = Keypad(makeKeymap(keys2), rowPins2, colPins2, ROWS, COLS);
 RTC_DS1307 rtc;
 dht DHT;
 
+
+
 void setup() {
   // Initalise Env
   initEnv();
@@ -229,7 +231,7 @@ void initEnv() {
     while (1);
   }
 }
-void createCustomChars(){
+void createCustomChars() {
   lcd.createChar(3, SqrRootSymb);
 }
 String readSerial() {
@@ -390,6 +392,7 @@ void(* resetFunc) (void) = 0;
 float calculate(String *inputArray) {
   float firstNum;
   float secondNum;
+  for (int i = 0; i < inStringPos; i++) { //Brackets
     if (inputArray[i] == "(") {
       int closeIndex = bracketFinder(i, inputArray);
       String tempArray[20];
@@ -405,7 +408,7 @@ float calculate(String *inputArray) {
       i--;
     }
   }
-  for (int i = 0; i < inStringPos; i++) { //Root & indicies 
+  for (int i = 0; i < inStringPos; i++) { //Root & indicies
     if (inputArray[i] == "R" || inputArray[i] == "^") {
       if (inputArray[i] == "R") { //Root
         if (emptyChecker(inputArray[i + 1])) {
@@ -416,7 +419,7 @@ float calculate(String *inputArray) {
         if (error == true) {
           return 0;
         }
-        reformArray(inputArray, i, i + 1, pow(firstNum, 1/2));
+        reformArray(inputArray, i, i + 1, pow(firstNum, 1 / 2));
       }
       else {
         if (emptyChecker(inputArray[i - 1]) || emptyChecker(inputArray[i + 1])) {
@@ -426,7 +429,7 @@ float calculate(String *inputArray) {
         reformArray(inputArray, i - 1, i + 1, pow(firstNum, secondNum));
         i--;
       }
-      
+
     }
   }
   for (int i = 0; i < inStringPos; i++) { //Division
@@ -506,15 +509,6 @@ float calculate(String *inputArray) {
   }
 }
 
-  if (num == "") {
-    error = true;
-    return true;
-  }
-  else {
-    return false;
-  }
-}
-
 float floatMaker(String input) {
   char readin;
   bool dec = false;
@@ -551,18 +545,28 @@ int bracketFinder(int startBacket, String *inputArray) { //Find the indexes of t
         return i;
       }
     }
-    
+
     if (i == 19) {
       if (openBrackets > 0) {
         error = true;
         Serial.println("Not enough close brackets");
       }
-    
+
       if (openBrackets < 0) {
         error = true;
         Serial.println("Too many brackets");
       }
     }
+  }
+}
+
+bool emptyChecker(String num) {
+  if (num == "") {
+    error = true;
+    return true;
+  }
+  else {
+    return false;
   }
 }
 
@@ -743,7 +747,7 @@ void subFromArrays() {
         inString[inStringPos] = "";
         for (int i = 0; i < len; i++) {
           inNum[i] = currentNum.charAt(i);
-        } 
+        }
         inNumPos = len - 1;
       }
       else {
@@ -929,10 +933,10 @@ void choosefunckey (char key) {
       break;
     case '^':
       addtoarrays(key);
-      addtoarrays('('); 
+      addtoarrays('(');
       break;
     case '<':
-      addtoarrays(key); 
+      addtoarrays(key);
       break;
     case '_':
       switch (mode) {
