@@ -48,6 +48,7 @@ uint8_t rowPins1[ROWS] = { P1R1, P1R2, P1R3, P1R4 }; // Pins connected to R1, R2
 #define P2C4 39
 
 char keys2[ROWS][COLS] = {
+  { '^', 'E', '<', '(' },
   { 'R', 'Z', 'X', ')' },
   { '%', 'V', 'B', '_' },
   { 'O', 'C', 'F', '!' }
@@ -830,7 +831,6 @@ void memsubtract() {
 
 
 void keypads() {
-
   char key1 = keypad1.getKey();
   char key2 = keypad2.getKey();
   if (on == false && key2 != 'O') {
