@@ -95,6 +95,7 @@ int cursory = 0;
 int interruptCount = 1;
 char mode = '0'; //0 is calc, 1 is temp/humidity, 2 is time.
 
+float result = 0.00;
 float lastnumber;
 String tempLastnumber = "";
 
@@ -115,6 +116,8 @@ int ldrSpace = 21;
 
 //Global Bools
 bool displayupdated = false;
+bool displaydhtupdated = true;
+bool displayclockupdated = true;
 bool calc = false;
 bool on = true;
 bool error = false;
@@ -356,25 +359,19 @@ void loop() {
       }
       else if (error == false) {
         updatedisplayonchange();
-        if (calc) {
-          resetarrays();
-          cursorx = 0;
-          cursory = 0;
-          lcd.setCursor(0, 0);
-          calc = false;
-        }
+        //Serial.println("Updated display");
       }
       delay(50);
       break;
 
     case '1': //Temp & humidity mode
-      lcd.clear();
+      //lcd.clear();
       displayTemp();
       delay(50);
       break;
 
     case '2':
-      lcd.clear();
+      //lcd.clear();
       displayTime();
       delay(50);
       break;
@@ -625,7 +622,20 @@ void reformArray(String *inArray, int startIndex, int closeIndex, float newValue
 
 //display functions
 void displayitem(char character) {
+  char modcharacter;
+  switch (character){
+    case 'R':
+      modcharacter = '\x03';
+    break;
+    case '*':
+      modcharacter ='X';
+    break;
+    default:
+      modcharacter = character;
+    break;
+  }
   lcd.setCursor(cursorx, cursory);
+  lcd.print(modcharacter);
   cursorx++;
 }
 
@@ -634,6 +644,8 @@ void printarray(char displayarray[20]) {
   cursorx = 0;
   for (int i = 0; i < 20; i++) {
     displayitem(displayarray[i]);
+    //Serial.print("Drawing text on screen: ");
+    //Serial.println(displayarray[i]);
   }
 }
 
@@ -650,37 +662,48 @@ void readsensor(){
   if ((temphumidity == humidity) or (temptemp == temp)){
     // do nothing
   } else {
-    humidity = temphumidity
+    humidity = temphumidity;
     temp = temptemp;
-    displayupdated = false;
+    displaydhtupdated = false;
   }
   
 }
 
 void displayTemp() {
   readsensor();
-  if (displayupdated == false){
+  if (displaydhtupdated == false){
     lcd.setCursor(0, 2);
     lcd.print(temp);
     lcd.print("C");
     lcd.setCursor(0, 1);
     lcd.print(humidity);
     lcd.print("%");
-    displayupdated = true;
+    displaydhtupdated = true;
   } 
 }
 
 void displayTime() {
   DateTime current = rtc.now();
-  if (current != past){
+  clockchk();
+  if (displayclockupdated == false){
     past = current;
     lcd.setCursor(6, 2);
     char time[8];
     sprintf(time, "%02d:%02d:%02d", current.hour(), current.minute(), current.second());
     lcd.println(time);
+    displayclockupdated = true;
   }
 }
-
+void clockchk(){
+  DateTime current = rtc.now();
+  if ((current.hour()==past.hour())&&(current.minute()==past.minute()) && (current.second()==past.second())){
+    //Serial.println("time same");
+  }else {
+    displayclockupdated = false;
+    past = current;
+  }
+  
+}
 void lastdig(char key) {
   //if not digit or decimal
   //set last number
@@ -701,6 +724,8 @@ void addtoarrays(char keys) {
 
   if (masterptr < 20) {
     rawInput[masterptr] = keys;
+    //Serial.print("Added key: ");
+    //Serial.println(rawInput[masterptr]);
     lastdig(keys);
     if (isDigit(keys) || keys == '.') { //Digit or decimal place
       inNum[inNumPos] = keys;
@@ -821,11 +846,13 @@ void memrecall() {
 
 void memadd() {
   // add last number into memory or whats currently in memory
-  Memory = Memory + lastnumber;
+  Memory = Memory + result;
+  Serial.print(Memory);
   MemSaveEEPROM();
 }
 void memsubtract() {
-  Memory = Memory - lastnumber;
+  Memory = Memory - result;
+  Serial.print(Memory);
   MemSaveEEPROM();
 }
 
@@ -837,6 +864,7 @@ void keypads() {
     return;
   }
   if (key1 != NO_KEY) {
+    //Serial.println(key1);
     if (error) {
       reset(true);
     }
@@ -849,6 +877,7 @@ void keypads() {
     }
   }
   if (key2 != NO_KEY) {
+    //Serial.println(key2);
     if (error) {
       reset(true);
     }
@@ -873,8 +902,14 @@ void choosefunckey (char key) {
       for (int i = 0; i < 20; i++) {
         inStringCopy[i] = inString[i];
       }
-      float result;
       noInterrupts();
+      if (calc) {
+        resetarrays();
+        cursorx = 0;
+        cursory = 0;
+        lcd.setCursor(0, 0);
+        calc = false;
+      }
       result = calculate(inStringCopy);
       interrupts();
       reset(false);
@@ -943,11 +978,11 @@ void choosefunckey (char key) {
       //Memory Recall
       memrecall();
       break;
-    case 'V' :
+    case 'B' :
       //Memory Add
       memadd();
       break;
-    case 'B' :
+    case 'V' :
       //Memory Subtract
       memsubtract();
       break;
