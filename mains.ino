@@ -6,11 +6,11 @@
 #include <RTClib.h>
 #include <dht.h>
 
-
-//Pin Def here
-
 //LDR
 #define ldr A0
+
+//DHT
+#define dhtPin 7
 
 //Keypad 1
 #define P1R1 22
@@ -64,7 +64,7 @@ uint8_t rowPins2[ROWS] = { P2R1, P2R2, P2R3, P2R4 }; // Pins connected to R1, R2
 
 //constants
 
-byte SqrRootSymb[8] = {
+byte sqrRootSymb[8] = {
   B00000,
   B00011,
   B00010,
@@ -73,6 +73,16 @@ byte SqrRootSymb[8] = {
   B10010,
   B01010,
   B00100
+};
+byte smallSubtractSymb[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B01111,
+  B01111,
+  B00000,
+  B00000,
+  B00000
 };
 
 
@@ -96,10 +106,10 @@ int interruptCount = 1;
 char mode = '0'; //0 is calc, 1 is temp/humidity, 2 is time.
 
 float result = 0.00;
-float lastnumber;
+float lastNumber;
 String tempLastnumber = "";
-char lastoperand = '+'; 
-int lastoperandlocation = 0;
+char lastOperand = '+'; 
+int lastOperandLocation = 0;
 
 int humidity = 0;
 float temp = 0.0;
@@ -117,9 +127,9 @@ int ldrAddress = 66;
 int ldrSpace = 21;
 
 //Global Bools
-bool displayupdated = false;
-bool displaydhtupdated = true;
-bool displayclockupdated = true;
+bool displayUpdated = false;
+bool displayDHTUpdated = true;
+bool displayClockUpdated = true;
 bool calc = false;
 bool on = true;
 bool error = false;
@@ -138,8 +148,6 @@ Keypad keypad1 = Keypad(makeKeymap(keys1), rowPins1, colPins1, ROWS, COLS);
 Keypad keypad2 = Keypad(makeKeymap(keys2), rowPins2, colPins2, ROWS, COLS);
 RTC_DS1307 rtc;
 dht DHT;
-
-
 
 void setup() {
   // Initalise Env
@@ -190,9 +198,11 @@ void setup() {
 
 }
 
+//Interrupt ISR
+
 void timerSetup() {
 
-  //Creates 200ms timer (5Hz)
+  //Creates 100ms timer (5Hz)
   cli();
 
   TCCR1A = 0;
@@ -213,7 +223,7 @@ void timerSetup() {
 ISR(TIMER1_COMPA_vect) {
   keypads(); //Checks keypad every 100ms
   if (interruptCount == 10) { //Runs every second
-    adjustbacklight(readLDR());
+    adjustBacklight(readLDR());
     interruptCount = 0;
   }
   interruptCount++;
@@ -230,7 +240,7 @@ void initEnv() {
   Serial.begin(9600);
   lcd.begin(20, 4);
   pinMode(BACKLIGHTPIN, OUTPUT);
-  adjustbacklight(255);
+  adjustBacklight(255);
   pinMode(A0, INPUT); //LDR
   passwordcheck();
   wipememory();
@@ -242,7 +252,8 @@ void initEnv() {
   }
 }
 void createCustomChars() {
-  lcd.createChar(3, SqrRootSymb);
+  lcd.createChar(3, sqrRootSymb);
+  lcd.createChar(4, smallSubtractSymb);
 }
 String readSerial() {
   Serial.flush();
@@ -256,19 +267,97 @@ String readSerial() {
     return Output;
   }
 }
-
-void adjustbacklight(int lux) {
+//Backlight and LDR
+void adjustBacklight(int lux) {
   analogWrite(BACKLIGHTPIN, lux);
 }
 
+void disLDR() {
+  int light_intensity = readLDR();
+  if (EEPROM.read(ldrAddress) == 255) {
+    EEPROM.write(ldrAddress, 1);
+    writeEEPROM(ldrAddress + 1, ldrAddress + ldrSpace, String(light_intensity));
+    Serial.print("Current LDR value of ");
+    Serial.print(light_intensity);
+    Serial.println(" saved to the EEPROM.");
+  }
+
+  String ldrValue = readEEPROM(ldrAddress + 1, ldrAddress + ldrSpace);
+  Serial.print(ldrValue);
+  Serial.println(" was read from the EEPROM!");
+  Serial.print("Current value is ");
+  Serial.println(readLDR());
+  adjustBacklight(light_intensity);
+  disMenuText();
+}
+int readLDR() {
+  int input = analogRead(ldr);
+  int mappedInput = map(input, 8, 1015, 255, 0);
+  return mappedInput;
+}
+// Temp and Clock
+void readsensor(){
+  DHT.read22(dhtPin);
+  int inHumidity = DHT.humidity;
+  float inTemp = DHT.temperature;
+  if ((inHumidity == humidity) || (inTemp == temp)){
+    // do nothing
+  } else {
+    humidity = inHumidity;
+    temp = inTemp;
+    displayDHTUpdated = false;
+  }
+  
+}
+
+void displayTemp() {
+  readsensor();
+  if (displayDHTUpdated == false){
+    lcd.setCursor(0, 2);
+    lcd.print(temp);
+    lcd.print("C");
+    lcd.setCursor(0, 1);
+    lcd.print(humidity);
+    lcd.print("%");
+    displayDHTUpdated = true;
+  } 
+}
+
+void displayTime() {
+  DateTime current = rtc.now();
+  clockTimeCheck();
+  if (displayClockUpdated == false){
+    past = current;
+    lcd.setCursor(6, 2);
+    char time[8];
+    sprintf(time, "%02d:%02d:%02d", current.hour(), current.minute(), current.second());
+    lcd.println(time);
+    displayClockUpdated = true;
+  }
+}
+void clockTimeCheck(){
+  DateTime current = rtc.now();
+  if ((current.hour()==past.hour())&&(current.minute()==past.minute()) && (current.second()==past.second())){
+    //Serial.println("time same");
+  }else {
+    displayClockUpdated = false;
+    past = current;
+  }
+  
+}
+//Password
 void passwordcheck() {
-  int passwordresetval = EEPROM.read(PasswordAddress + PasswordSpace);//Read last val of password
+  //Read last val of password
+  int passwordresetval = EEPROM.read(PasswordAddress + PasswordSpace);
+  //Checks if a value has been entered already for the password
   if (passwordresetval == 255) {
     writeEEPROM(PasswordAddress, PasswordAddress + PasswordSpace - 1, DefaultPassword);
+    EEPROM.write(PasswordAddress + PasswordSpace, 0);
   }
   ActualPassword = readEEPROM(PasswordAddress, PasswordAddress + PasswordSpace - 1);
   ActualPassword.replace(" ", "");
 }
+//memory
 void checkformemory() {
   int memoryresetval = EEPROM.read(MemoryAddress + MemorySpace);//Read last val of memory
   if (memoryresetval == 255) {
@@ -289,11 +378,61 @@ void MemSaveEEPROM() {
   writeEEPROM(MemoryAddress, MemoryAddress + MemorySpace - 1, strmem);
   EEPROM.write(MemoryAddress + MemorySpace, 0);
 }
+void memrecall() {
+  //recall memory from eeprom and input into function
+  String memstring = String(Memory);
+  for (int i = 0; i < memstring.length(); i++) {
+    char key = memstring.charAt(i);
+    addKeytoArray(key);
+  }
+}
+
+void memadd() {
+  // add last number into memory or whats currently in memory
+  Memory = Memory + result;
+  Serial.print(Memory);
+  MemSaveEEPROM();
+}
+void memsubtract() {
+  Memory = Memory - result;
+  Serial.print(Memory);
+  MemSaveEEPROM();
+}
+//EEPROM
+String readEEPROM(int startAdd, int stopAdd) {
+  String outputText;
+  for (int i = startAdd; i <= stopAdd; i++) {
+    char temp = EEPROM.read(i);
+    outputText += temp;
+  }
+  outputText.trim();
+  return outputText;
+}
+
+void writeEEPROM(int startadd, int stopadd, String msg) {
+  int j = 0;
+  char space = ' ';
+  for (int i = startadd; i <= stopadd; i++) {
+    if (j < msg.length()) {
+      char temp = msg.charAt(j);
+      //Serial.print(i);
+      //Serial.println(temp);
+      EEPROM.write(i, temp);
+
+    } else {
+      EEPROM.write(i, space);
+    }
+    j++;
+  }
+}
+//inital text
+
 void initialTextCheck() {
   int initialTextResetVal = EEPROM.read(initTextAddress + initTextSpace);
   if (initialTextResetVal == 255) {
     Serial.println("No value stored, loading in default for inital text.");
     writeEEPROM(initTextAddress, initTextAddress + initTextSpace - 1, defaultText);
+    EEPROM.write(initTextAddress + initTextSpace, 0);
   }
   initialText = readEEPROM(initTextAddress, initTextAddress + initTextSpace - 1);
   Serial.println(initialText);
@@ -328,25 +467,6 @@ void changeInitText() {
     }
 
   }
-}
-
-void disLDR() {
-  int light_intensity = readLDR();
-  if (EEPROM.read(ldrAddress) == 255) {
-    EEPROM.write(ldrAddress, 1);
-    writeEEPROM(ldrAddress + 1, ldrAddress + ldrSpace, String(light_intensity));
-    Serial.print("Current LDR value of ");
-    Serial.print(light_intensity);
-    Serial.println(" saved to the EEPROM.");
-  }
-
-  String ldrValue = readEEPROM(ldrAddress + 1, ldrAddress + ldrSpace);
-  Serial.print(ldrValue);
-  Serial.println(" was read from the EEPROM!");
-  Serial.print("Current value is ");
-  Serial.println(readLDR());
-  adjustbacklight(light_intensity);
-  disMenuText();
 }
 
 void loop() {
@@ -384,15 +504,7 @@ void loop() {
   }
 }
 
-int readLDR() {
-  int input = analogRead(ldr);
-  int mappedInput = map(input, 8, 1015, 255, 0);
-  return mappedInput;
-}
-
-
-void(* resetFunc) (void) = 0;
-
+//calculate
 float calculate(String *inputArray) {
   float firstNum;
   float secondNum;
@@ -414,19 +526,50 @@ float calculate(String *inputArray) {
   }
   for (int i = 0; i < inStringPos; i++) { //Root & indicies
     if (inputArray[i] == "R" || inputArray[i] == "^") {
-      if (inputArray[i] == "R") { //Root
+      if (inputArray[i] == "R") { 
+        //Root
+
+        //Checks if the number after the root symbol is empty
         if (emptyChecker(inputArray[i + 1])) {
           error = true;
           return 0;
         }
+        //Assigns firstNum to the number after the root.
         firstNum = floatMaker(inputArray[i + 1]);
         if (error == true) {
           return 0;
         }
+
+        //Checks if sqaure root would be of a negative number.
+        if (firstNum < 0) {
+          error = true;
+          return 0;
+        }
+
+        //Reforms the arrays with square root of firstNum.
         reformArray(inputArray, i, i + 1, pow(firstNum, 1 / 2));
       }
       else {
+        //Power function.
         if (emptyChecker(inputArray[i - 1]) || emptyChecker(inputArray[i + 1])) {
+          error = true;
+          return 0;
+        }
+        firstNum = floatMaker(inputArray[i - 1]);
+        secondNum = floatMaker(inputArray[i + 1]);
+
+        //Out of range checking to prevent nan errors
+
+        //Checks if there is a decimal component, to prevent root of a negative number
+        if (secondNum - floorf(secondNum) != 0) { 
+          //Negative number in the root.
+          if (firstNum < 0) { 
+            error = true;
+            return 0;
+          }
+        }
+        //Checks for 0^0;
+        if (secondNum == 0 && firstNum == 0 ) {
           error = true;
           return 0;
         }
@@ -513,6 +656,7 @@ float calculate(String *inputArray) {
   }
 }
 
+//Array Modifiers
 float floatMaker(String input) {
   char readin;
   bool dec = false;
@@ -535,6 +679,25 @@ float floatMaker(String input) {
     }
   }
   return input.toFloat(); //Turns input string into float and returns
+}
+
+void reformArray(String *inArray, int startIndex, int closeIndex, float newValue) {
+  String newArray[20];
+  if (startIndex != 0) {
+    for (int i = 0; i < startIndex; i++) { //Enters all of the arrays items upto the one before the first number used
+      newArray[i] = inArray[i];
+    }
+  }
+  newArray[startIndex] = newValue;
+  for (int i = startIndex + 1; i < (20 - (closeIndex - startIndex)); i++) { //Moves everything down to fill out the new array.
+    newArray[i] = inArray[i + (closeIndex - startIndex)];
+  }
+  for (int i = 20 - (closeIndex - startIndex); i < 20; i++) {
+    newArray[i] = ""; //Prevents random data from getting put into the new array
+  }
+  for (int i = 0; i < 20; i++) { //Copies the temporary array to the orginal.
+    inArray[i] = newArray[i];
+  }
 }
 
 int bracketFinder(int startBacket, String *inputArray) { //Find the indexes of the close of a bracket
@@ -574,205 +737,60 @@ bool emptyChecker(String num) {
   }
 }
 
-void reset(bool full) {
-  resetarrays();
-  resetCounters();
-  lcd.clear();
-  if (full) {
-    error = false;
-  }
-}
-
-//array modules
-void resetarrays() {
-  for (int i = 0; i < 20; i++)
-  {
-    rawInput[i] = '\0';
-    inString[i] = "";
-    inStringCopy[i] = "";
-    inNum[i] = '\0';
-  }
-}
-
-void resetCounters() {
-  masterptr = 0;
-  inNumPos = 0;
-  inStringPos = 0;
-  cursorx = 0;
-  cursory = 0;
-}
-
-
-void reformArray(String *inArray, int startIndex, int closeIndex, float newValue) {
-  String newArray[20];
-  if (startIndex != 0) {
-    for (int i = 0; i < startIndex; i++) { //Enters all of the arrays items upto the one before the first number used
-      newArray[i] = inArray[i];
-    }
-  }
-  newArray[startIndex] = newValue;
-  for (int i = startIndex + 1; i < (20 - (closeIndex - startIndex)); i++) { //Moves everything down to fill out the new array.
-    newArray[i] = inArray[i + (closeIndex - startIndex)];
-  }
-  for (int i = 20 - (closeIndex - startIndex); i < 20; i++) {
-    newArray[i] = ""; //Prevents random data from getting put into the new array
-  }
-  for (int i = 0; i < 20; i++) { //Copies the temporary array to the orginal.
-    inArray[i] = newArray[i];
-  }
-}
-
-//display functions
-void displayitem(char character) {
-  char modcharacter;
-  switch (character){
-    case 'R':
-      modcharacter = '\x03';
-    break;
-    case '*':
-      modcharacter ='X';
-    break;
-    default:
-      modcharacter = character;
-    break;
-  }
-  lcd.setCursor(cursorx, cursory);
-  lcd.print(modcharacter);
-  cursorx++;
-}
-
-void printarray(char displayarray[20]) {
-  cursory = 0;
-  cursorx = 0;
-  for (int i = 0; i < 20; i++) {
-    displayitem(displayarray[i]);
-    //Serial.print("Drawing text on screen: ");
-    //Serial.println(displayarray[i]);
-  }
-}
-
-void updatedisplayonchange() {
-  if (displayupdated == false) {
-    printarray(rawInput);
-    displayupdated = true;
-  }
-}
-void readsensor(){
-  DHT.read22(7);
-  int temphumidity = DHT.humidity;
-  float temptemp = DHT.temperature;
-  if ((temphumidity == humidity) or (temptemp == temp)){
-    // do nothing
-  } else {
-    humidity = temphumidity;
-    temp = temptemp;
-    displaydhtupdated = false;
-  }
-  
-}
-
-void displayTemp() {
-  readsensor();
-  if (displaydhtupdated == false){
-    lcd.setCursor(0, 2);
-    lcd.print(temp);
-    lcd.print("C");
-    lcd.setCursor(0, 1);
-    lcd.print(humidity);
-    lcd.print("%");
-    displaydhtupdated = true;
-  } 
-}
-
-void displayTime() {
-  DateTime current = rtc.now();
-  clockchk();
-  if (displayclockupdated == false){
-    past = current;
-    lcd.setCursor(6, 2);
-    char time[8];
-    sprintf(time, "%02d:%02d:%02d", current.hour(), current.minute(), current.second());
-    lcd.println(time);
-    displayclockupdated = true;
-  }
-}
-void clockchk(){
-  DateTime current = rtc.now();
-  if ((current.hour()==past.hour())&&(current.minute()==past.minute()) && (current.second()==past.second())){
-    //Serial.println("time same");
-  }else {
-    displayclockupdated = false;
-    past = current;
-  }
-  
-}
-void lastdig(char key, int loc) {
-  //if not digit or decimal
-  //set last number
-  if (isDigit(key) || key == '.') { //Digit or decimal place
-    tempLastnumber + key;
-  } else {
-    lastnumber = floatMaker(tempLastnumber);
-    tempLastnumber = "";
-  }
-  if((key == '+') || (key == '-')){
-    lastoperand = key;
-    lastoperandlocation = loc
-  }
-}
-//Input keypresses
-void addtoarrays(char keys) {
+void addKeytoArray(char keys) {
   if (calc) {
     lcd.clear();
     lcd.setCursor(cursorx, cursory);
     calc = false;
   }
 
-  if (masterptr < 20) {
-    rawInput[masterptr] = keys;
-    //Serial.print("Added key: ");
-    //Serial.println(rawInput[masterptr]);
-    lastdig(keys, masterptr);
-    if (isDigit(keys) || keys == '.') { //Digit or decimal place
-      inNum[inNumPos] = keys;
-      inNumPos++;
-    }
-    else { //Function key pressed
-      String inputtedNumber = "";
-      if (inNumPos != 0) { //True if any numbers were entered
-        for (int i = 0; i < inNumPos; i++) {
-          inputtedNumber += inNum[i];
-        }
-        for (int i = 0; i < 20; i++) {
-          inNum[i] = '\0';
-        }
-        inString[inStringPos] = inputtedNumber;
-        inStringPos++;
-        if (keys != '=') {
-          inString[inStringPos] = keys;
-          inStringPos++;
-        }
-        inNumPos = 0;
-      }
-      else { //No numbers were entered eg. double operator
-        if (keys != '=') {
-          inString[inStringPos] = keys;
-          inStringPos += 1;
-        }
-      }
-
-    }
-    masterptr++;
-    displayupdated = false;
-    // for(int i = 0; i < masterptr + 1; i++) {
-    //   Serial.print(rawInput[i]);
-    // }
-    // Serial.println();
+  if (masterptr >= 20) {
+    return;
   }
+  
+  rawInput[masterptr] = keys;
+  lastDigit(keys, masterptr);
+  //Serial.print("Added key: ");
+  //Serial.println(rawInput[masterptr]);
+  
+  if (isDigit(keys) || keys == '.') { //Digit or decimal place
+    inNum[inNumPos] = keys;
+    inNumPos++;
+  }
+  else { //Function key pressed
+    String inputtedNumber = "";
+    if (inNumPos != 0) { //True if any numbers were entered
+      for (int i = 0; i < inNumPos; i++) {
+        inputtedNumber += inNum[i];
+      }
+      for (int i = 0; i < 20; i++) {
+        inNum[i] = '\0';
+      }
+      inString[inStringPos] = inputtedNumber;
+      inStringPos++;
+      if (keys != '=') {
+        inString[inStringPos] = keys;
+        inStringPos++;
+      }
+      inNumPos = 0;
+    }
+    else { //No numbers were entered eg. double operator
+      if (keys != '=') {
+        inString[inStringPos] = keys;
+        inStringPos += 1;
+      }
+    }
+
+  }
+  masterptr++;
+  displayUpdated = false;
+  // for(int i = 0; i < masterptr + 1; i++) {
+  //   Serial.print(rawInput[i]);
+  // }
+  // Serial.println();
 }
 
-void subFromArrays() {
-
+void removeLastCharacter() {
   if (calc) {
     lcd.clear();
     lcd.setCursor(cursorx, cursory);
@@ -782,13 +800,12 @@ void subFromArrays() {
   if (masterptr > 0) {
     masterptr--;
     rawInput[masterptr] = '\0';
-    displayupdated = false;
+    displayUpdated = false;
 
     if (inNumPos != 0) {
       inNumPos--;
       inNum[inNumPos] = '/0';
-      displayupdated = false;
-
+      displayUpdated = false;
     }
     else {
       inStringPos--;
@@ -805,104 +822,148 @@ void subFromArrays() {
       else {
         inString[inStringPos] = "";
       }
-      displayupdated = false;
+      displayUpdated = false;
     }
   }
 }
 
-changecharinarray(char key, int location){
-  rawInput[location] = keys;
-    lastdig(keys, location);
-    if (isDigit(key) || key == '.') { //Digit or decimal place
-      inNum[inNumPos] = key;
-      inNumPos++;
+void flipNumberOperand(){
+  //Nothing is is inNum
+  Serial.println("Flip called");
+  if (inNumPos == 0) {
+    inNum[inNumPos] = '-';
+    inNumPos++;
+    int j = 0;
+    for (int i = masterptr - inNumPos + 1; i < masterptr + 1; i++) {
+      rawInput[i] = inNum[j];
+      j++;
     }
-    else { //Function key pressed
-      String inputtedNumber = "";
-      if (inNumPos != 0) { //True if any numbers were entered
-        for (int i = 0; i < inNumPos; i++) {
-          inputtedNumber += inNum[i];
-        }
-        for (int i = 0; i < 20; i++) {
-          inNum[i] = '\0';
-        }
-        inString[inStringPos] = inputtedNumber;
-        inStringPos++;
-        if (keys != '=') {
-          inString[inStringPos] = key;
-          inStringPos++;
-        }
-        inNumPos = 0;
-      }
-      else { //No numbers were entered eg. double operator
-        if (key != '=') {
-          inString[inStringPos] = key;
-          inStringPos += 1;
-        }
-      }
+    masterptr += 1;
+  }
+  //inNum is full
+  else if (inNumPos == 20) {
+    error = true;
+    return;
+  }
+  //Checks if inNum already has a negative at the start
 
+  //Number is not already negative
+  else if (inNum[0] != '-') {
+    //Moves all items up one position
+    for (int i = inNumPos; i > 0; i--){
+      inNum[i] = inNum[i - 1];
     }
-    masterptr++;
-    displayupdated = false;
-    // for(int i = 0; i < masterptr + 1; i++) {
-    //   Serial.print(rawInput[i]);
-    // }
-    // Serial.println();
-  }
-}
+    inNum[0] = '-';
+    inNumPos++;
 
-String readEEPROM(int startadd, int stopadd) {
-  String Output;
-  for (int i = startadd; i <= stopadd; i++) {
-    char temp = EEPROM.read(i);
-    Output = Output + temp;
-  }
-  Output.trim();
-  return Output;
-}
-
-void writeEEPROM(int startadd, int stopadd, String msg) {
-  int j = 0;
-  char space = ' ';
-  for (int i = startadd; i <= stopadd; i++) {
-    if (j < msg.length()) {
-      char temp = msg.charAt(j);
-      //Serial.print(i);
-      //Serial.println(temp);
-      EEPROM.write(i, temp);
-
-    } else {
-      EEPROM.write(i, space);
+    int j = 0;
+    for (int i = masterptr - inNumPos + 1; i < masterptr + 1; i++) {
+      rawInput[i] = inNum[j];
+      j++;
     }
-    j++;
+    masterptr += 1;
+  }
+  //Number is already negative
+  else if (inNum[0] == '-') {
+    //Shuffles all items down one position
+    for (int i = 0; i < inNumPos; i++){
+      inNum[i] = inNum[i + 1];
+    }
+    inNumPos--;
+
+    int j = 0;
+    for (int i = masterptr - inNumPos - 1; i < masterptr + 1; i++) {
+      rawInput[i] = inNum[j];
+      j++;
+    }
+    masterptr -= 1;
+  }
+
+  displayUpdated = false;
+}
+
+//reset functions
+void resetarrays() {
+  for (int i = 0; i < 20; i++)
+  {
+    rawInput[i] = '\0';
+    inString[i] = "";
+    inStringCopy[i] = "";
+    inNum[i] = '\0';
   }
 }
-void dellastinput() {
-  //take master pointer and retard by 1, delete from all arrays
-  subFromArrays();
+void reset(bool full) {
+  resetarrays();
+  resetCounters();
+  lcd.clear();
+  if (full) {
+    error = false;
+  }
+}
+void resetCounters() {
+  masterptr = 0;
+  inNumPos = 0;
+  inStringPos = 0;
+  cursorx = 0;
+  cursory = 0;
 }
 
-void memrecall() {
-  //recall memory from eeprom and input into function
-  String memstring = String(Memory);
-  for (int i = 0; i < memstring.length(); i++) {
-    char key = memstring.charAt(i);
-    addtoarrays(key);
+void(* resetFunc) (void) = 0;
+
+//display functions
+void displayitem(char character) {
+  char modifiedCharacter;
+  switch (character){
+    case 'R':
+      modifiedCharacter = '\x03';
+    break;
+    case '*':
+      modifiedCharacter ='X';
+    break;
+    case '<':
+      modifiedCharacter = '\x04';
+    break;
+    default:
+      modifiedCharacter = character;
+    break;
+  }
+  lcd.setCursor(cursorx, cursory);
+  lcd.print(modifiedCharacter);
+  cursorx++;
+}
+
+void printarray(char displayarray[20]) {
+  cursory = 0;
+  cursorx = 0;
+  for (int i = 0; i < 20; i++) {
+    displayitem(displayarray[i]);
+    //Serial.print("Drawing text on screen: ");
+    //Serial.println(displayarray[i]);
   }
 }
 
-void memadd() {
-  // add last number into memory or whats currently in memory
-  Memory = Memory + result;
-  Serial.print(Memory);
-  MemSaveEEPROM();
-}
-void memsubtract() {
-  Memory = Memory - result;
-  Serial.print(Memory);
-  MemSaveEEPROM();
+void updatedisplayonchange() {
+  if (displayUpdated == false) {
+    printarray(rawInput);
+    displayUpdated = true;
+  }
 }
 
+void lastDigit(char key, int loc) {
+  //if not digit or decimal
+  //set last number
+  if (isDigit(key) || key == '.') { //Digit or decimal place
+    tempLastnumber + key;
+  } else {
+    lastNumber = floatMaker(tempLastnumber);
+    tempLastnumber = "";
+  }
+  if((key == '+') || (key == '-')){
+    lastOperand = key;
+    lastOperandLocation = loc;
+  }
+}
+//Input keypresses
 
 void keypads() {
   char key1 = keypad1.getKey();
@@ -918,9 +979,9 @@ void keypads() {
     //Serial.println(key1);
     if (isDigit(key1)) {
       //add char to input and display arrays
-      addtoarrays(key1);
+      addKeytoArray(key1);
     } else {
-      choosefunckey(key1);
+      chooseFunctionKey(key1);
     }
   }
   if (key2 != NO_KEY) {
@@ -931,21 +992,21 @@ void keypads() {
     //Serial.println(key2);
     if (isDigit(key2)) {
       //add char to input and display arrays
-      addtoarrays(key2);
+      addKeytoArray(key2);
     } else {
-      choosefunckey(key2);
+      chooseFunctionKey(key2);
     }
   }
 }
 
 
-void choosefunckey (char key) {
+void chooseFunctionKey (char key) {
   //has to work this way given buttons have more than one use in some cases
   switch (key)
   {
     case '=':
       //Execute calculator function
-      addtoarrays(key);
+      addKeytoArray(key);
       for (int i = 0; i < 20; i++) {
         inStringCopy[i] = inString[i];
       }
@@ -962,101 +1023,78 @@ void choosefunckey (char key) {
       reset(false);
       lcd.setCursor(0, 3);
       lcd.println(result);
-      break;
-    case '+':
-      //add plus to char array
-      addtoarrays(key);
-      break;
-    case '-':
-      //add minus to char array
-      addtoarrays(key);
-      break;
-    case '*':
-      // add mulitply to char array
-      addtoarrays(key);
-      break;
-    case '/':
-      addtoarrays(key);
-      break;
-    case '.':
-      //add decimal point to char array (make float)
-      addtoarrays(key);
-      break;
+    break;
+    case '_':
+      switch (mode) {
+        case '0':
+          mode = '1';
+          lcd.clear();
+        break;
+        case '1':
+          mode = '2';
+          lcd.clear();
+        break;
+        case '2':
+          mode = '0';
+          lcd.clear();
+        break;
+      }
+    break;
     case 'O':
       resetFunc();
-      break;
+    break;
     case 'F' :
-      adjustbacklight(0);
+      adjustBacklight(0);
       lcd.clear();
       resetFunc();
       on = false;
-      break;
-    case '(':
-      addtoarrays(key);
-      break;
-    case ')':
-      addtoarrays(key);
-      break;
+    break;
     case 'R':
-      addtoarrays(key);
-      addtoarrays('(');
-      break;
-    case '%':
-      addtoarrays(key);
-      break;
+      addKeytoArray(key);
+      addKeytoArray('(');
+    break;
     case 'C' :
       //Clear Last digit
       if (error || calc) {
         reset(true);
       }
       else {
-        dellastinput();
+        removeLastCharacter();
       }
-      break;
+    break;
     case 'E' :
       //Clear Everything
       reset(true);
-      break;
+    break;
     case 'Z' :
       //Memory Clear
       wipememory();
-      break;
+    break;
     case 'X' :
       //Memory Recall
       memrecall();
-      break;
+    break;
     case 'B' :
       //Memory Add
       memadd();
-      break;
+    break;
     case 'V' :
       //Memory Subtract
       memsubtract();
-      break;
+    break;
     case '^':
-      addtoarrays(key);
-      addtoarrays('(');
-      break;
+      addKeytoArray(key);
+      addKeytoArray('(');
+    break;
+    case '!':
+      //Empty key
+    break;
     case '<':
-      //addtoarrays(key);
-      
-      break;
-    case '_':
-      switch (mode) {
-        case '0':
-          mode = '1';
-          lcd.clear();
-          break;
-        case '1':
-          mode = '2';
-          lcd.clear();
-          break;
-        case '2':
-          mode = '0';
-          lcd.clear();
-          break;
-      }
-      break;
-
+      flipNumberOperand();
+    break;
+    default:
+      //All other keys
+      addKeytoArray(key);
+    break;
   }
 }
