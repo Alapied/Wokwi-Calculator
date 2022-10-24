@@ -98,6 +98,8 @@ char mode = '0'; //0 is calc, 1 is temp/humidity, 2 is time.
 float result = 0.00;
 float lastnumber;
 String tempLastnumber = "";
+char lastoperand = '+'; 
+int lastoperandlocation = 0;
 
 int humidity = 0;
 float temp = 0.0;
@@ -704,7 +706,7 @@ void clockchk(){
   }
   
 }
-void lastdig(char key) {
+void lastdig(char key, int loc) {
   //if not digit or decimal
   //set last number
   if (isDigit(key) || key == '.') { //Digit or decimal place
@@ -712,6 +714,10 @@ void lastdig(char key) {
   } else {
     lastnumber = floatMaker(tempLastnumber);
     tempLastnumber = "";
+  }
+  if((key == '+') || (key == '-')){
+    lastoperand = key;
+    lastoperandlocation = loc
   }
 }
 //Input keypresses
@@ -726,7 +732,7 @@ void addtoarrays(char keys) {
     rawInput[masterptr] = keys;
     //Serial.print("Added key: ");
     //Serial.println(rawInput[masterptr]);
-    lastdig(keys);
+    lastdig(keys, masterptr);
     if (isDigit(keys) || keys == '.') { //Digit or decimal place
       inNum[inNumPos] = keys;
       inNumPos++;
@@ -801,6 +807,47 @@ void subFromArrays() {
       }
       displayupdated = false;
     }
+  }
+}
+
+changecharinarray(char key, int location){
+  rawInput[location] = keys;
+    lastdig(keys, location);
+    if (isDigit(key) || key == '.') { //Digit or decimal place
+      inNum[inNumPos] = key;
+      inNumPos++;
+    }
+    else { //Function key pressed
+      String inputtedNumber = "";
+      if (inNumPos != 0) { //True if any numbers were entered
+        for (int i = 0; i < inNumPos; i++) {
+          inputtedNumber += inNum[i];
+        }
+        for (int i = 0; i < 20; i++) {
+          inNum[i] = '\0';
+        }
+        inString[inStringPos] = inputtedNumber;
+        inStringPos++;
+        if (keys != '=') {
+          inString[inStringPos] = key;
+          inStringPos++;
+        }
+        inNumPos = 0;
+      }
+      else { //No numbers were entered eg. double operator
+        if (key != '=') {
+          inString[inStringPos] = key;
+          inStringPos += 1;
+        }
+      }
+
+    }
+    masterptr++;
+    displayupdated = false;
+    // for(int i = 0; i < masterptr + 1; i++) {
+    //   Serial.print(rawInput[i]);
+    // }
+    // Serial.println();
   }
 }
 
@@ -991,7 +1038,8 @@ void choosefunckey (char key) {
       addtoarrays('(');
       break;
     case '<':
-      addtoarrays(key);
+      //addtoarrays(key);
+      
       break;
     case '_':
       switch (mode) {
