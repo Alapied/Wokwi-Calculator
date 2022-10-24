@@ -988,7 +988,9 @@ void lastDigit(char key, int loc) {
 //Input keypresses
 
 void keypads() {
-  char key1 = keypad1.getKey();
+  switch (mode){
+    case 0:
+      char key1 = keypad1.getKey();
   char key2 = keypad2.getKey();
   if (on == false && key2 != 'O') {
     return;
@@ -1019,22 +1021,48 @@ void keypads() {
       chooseFunctionKey(key2);
     }
   }
+    break;
+    default:
+    char key1 = keypad1.getKey();
+    char key2 = keypad2.getKey();
+      if (on == false && key2 != 'O') {
+    return;
+    }
+    if (key1 != NO_KEY) {
+    //Serial.println(key1);
+      if (error) {
+        reset(true);
+    }
+    chooseFunctionKey(key1)
+    }
+    if (key2 != NO_KEY) {
+    //Serial.println(key1);
+      if (error) {
+        reset(true);
+    }
+    chooseFunctionKey(key2)
+    }
+    break;
+  }
+  
 }
 
 
 void chooseFunctionKey (char key) {
   //has to work this way given buttons have more than one use in some cases
-  switch (key)
-  {
-    case '=':
-      //Execute calculator function
-      addKeytoArray(key);
-      for (int i = 0; i < 20; i++) {
-        inStringCopy[i] = inString[i];
-      }
-      noInterrupts();
-      if (calc) {
-        resetarrays();
+  switch (mode){
+  case 0:
+    switch (key)
+    {
+      case '=':
+        //Execute calculator function
+        addKeytoArray(key);
+        for (int i = 0; i < 20; i++) {
+         inStringCopy[i] = inString[i];
+        }
+        noInterrupts();
+        if (calc) {
+          resetarrays();
         cursorx = 0;
         cursory = 0;
         lcd.setCursor(0, 0);
@@ -1117,5 +1145,28 @@ void chooseFunctionKey (char key) {
       //All other keys
       addKeytoArray(key);
     break;
+  }
+  break;
+  default:
+  switch (key)
+    {
+    case 'O':
+      resetFunc();
+    break;
+    case 'F' :
+      adjustBacklight(0);
+      lcd.clear();
+      on = false;
+    break;
+    case 'E' :
+      //Clear Everything
+      reset(true);
+    break;
+    case 'Z' :
+      //Memory Clear
+      wipememory();
+    break;
+  }
+  break;
   }
 }
