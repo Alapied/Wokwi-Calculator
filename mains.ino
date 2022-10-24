@@ -545,9 +545,8 @@ String calculate(String *inputArray) {
           error = true;
           return "0";
         }
-
         //Reforms the arrays with square root of firstNum.
-        reformArray(inputArray, i, i + 1, String(pow(firstNum, 1 / 2)));
+        reformArray(inputArray, i, i + 1, String(pow(firstNum, 0.5)));
       }
       else {
         //Power function.
