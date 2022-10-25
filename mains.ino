@@ -611,26 +611,42 @@ String calculate(String *inputArray) {
 
   //Division
   for (int i = 0; i < inStringPos; i++) {
-    if (inputArray[i] == "/") {
-      if (emptyChecker(inputArray[i - 1]) || emptyChecker(inputArray[i + 1])) {
-        error = true;
-        return "0";
-      }
-      firstNum = floatMaker(inputArray[i - 1]);
-      secondNum = floatMaker(inputArray[i + 1]);
-      if (error == true) {
-        return "0";
-      }
+    if (inputArray[i] == "/" || inputArray[i] == "%") {
+      //Division
+      if (inputArray[i] == "/") {
+        if (emptyChecker(inputArray[i - 1]) || emptyChecker(inputArray[i + 1])) {
+          error = true;
+          return "0";
+        }
+        firstNum = floatMaker(inputArray[i - 1]);
+        secondNum = floatMaker(inputArray[i + 1]);
+        if (error == true) {
+          return "0";
+        }
 
-      //Checks for / by 0.
-      if (secondNum == 0) {
-        error = true;
-        Serial.println("Div by 0 error.");
-        return "0";
+        //Checks for / by 0.
+        if (secondNum == 0) {
+          error = true;
+          Serial.println("Div by 0 error.");
+          return "0";
+        }
+        reformArray(inputArray, i - 1, i + 1, String(firstNum / secondNum));
+        i--;
+      }
+      // %
+      else {
+        if (emptyChecker(inputArray[i - 1])) {
+          error = true;
+          return "0";
+        }
+        firstNum = floatMaker(inputArray[i - 1]);
+        if (error) {
+          return "0";
+        }
+        reformArray(inputArray, i - 1, i, String(firstNum / 100));
+        i--;
       }
       
-      reformArray(inputArray, i - 1, i + 1, String(firstNum / secondNum));
-      i--;
     }
   }
 
