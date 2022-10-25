@@ -222,7 +222,7 @@ void timerSetup() {
 //Timer interrupt
 ISR(TIMER1_COMPA_vect) {
   keypads(); //Checks keypad every 100ms
-  if (interruptCount == 10) { //Runs every second
+  if ((interruptCount == 10)&&(on)) { //Runs every second
     adjustBacklight(readLDR());
     interruptCount = 0;
   }
@@ -246,7 +246,7 @@ void initEnv() {
   adjustBacklight(255);
   pinMode(A0, INPUT); //LDR
   passwordcheck();
-  wipeMemory();
+  checkForMemory();
   initialTextCheck();
   createCustomChars();
   if (! rtc.begin()) {
@@ -413,13 +413,15 @@ void memRecall() {
 void memAdd() {
   // add last number into memory or whats currently in memory
   Memory = Memory + result;
-  Serial.print(Memory);
+  Serial.print("Saved to Memory: ");
+  Serial.println(Memory);
   MemSaveEEPROM();
 }
 void memSubtract() {
   //Subtract was was last in memory
   Memory = Memory - result;
-  Serial.print(Memory);
+  Serial.print("Saved to Memory: ");
+  Serial.println(Memory);
   MemSaveEEPROM();
 }
 //EEPROM
@@ -1270,6 +1272,23 @@ void chooseFunctionKey (char key) {
     default:
       switch (key)
         {
+        case '_':
+          //Changes the current mode of the calculator
+          switch (mode) {
+            case '0':
+              mode = '1';
+              lcd.clear();
+            break;
+            case '1':
+              mode = '2';
+              lcd.clear();
+            break;
+            case '2':
+              mode = '0';
+              lcd.clear();
+            break;
+          }
+        break;
         case 'O':
           resetFunc();
         break;
