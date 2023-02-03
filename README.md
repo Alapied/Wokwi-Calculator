@@ -1,2 +1,2 @@
 # Wokwi-Calculator
-EEE20003 Microcontrollers Project
+Microcontroller Project to create an LCD based Calculator using interrupts that can calculate simple BODMAS
